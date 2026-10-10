@@ -1,0 +1,3278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" id="metaTheme" content="#0E1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Presupuesto">
+<script>try{var t=localStorage.getItem('tema-app');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<title>Presupuesto Familiar — App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;600;700;800&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:var(--paper);
+    --paper-line:var(--surface-2);
+    --ink:var(--ink);
+    --ledger:var(--ledger);
+    --ledger-dk:var(--ledger-dk);
+    --gold:var(--gold);
+    --gold-dk:var(--gold);
+    --rust:var(--rust);
+    --rust-dk:var(--rust-dk);
+    --muted:var(--muted);
+    --card-bg:var(--surface);
+    --card-border:var(--line);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:repeating-linear-gradient(var(--paper) 0 34px, var(--paper-line) 34px 35px);
+    font-family:var(--body);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    background:var(--ledger);
+    background-image:linear-gradient(180deg,var(--ledger) 0%,var(--ledger-dk) 100%);
+    color:var(--ink);
+    padding:24px 20px 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:0;
+    height:6px;
+    background:repeating-linear-gradient(90deg,var(--gold) 0 10px, transparent 10px 20px);
+    opacity:.55;
+  }
+  .eyebrow{
+    font-family:var(--body);
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:400;
+    font-size:32px;
+    letter-spacing:.03em;
+    margin:0 0 14px;
+    line-height:1.15;
+  }
+  .month-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .month-nav button{
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--ink);
+    width:30px;height:30px;
+    border-radius:3px;
+    font-size:15px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .month-nav button:active{background:var(--line);}
+  .month-label{
+    font-family:var(--body);
+    font-size:13px;
+    letter-spacing:.06em;
+    text-transform:capitalize;
+    flex:1;
+    text-align:center;
+    color:var(--ink);
+  }
+  .balance-row{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+  }
+  .balance-label{
+    font-family:var(--body);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 4px;
+  }
+  .balance-amount{
+    font-family:var(--body);
+    font-size:32px;
+    font-weight:600;
+    letter-spacing:-.01em;
+  }
+  .stamp{
+    font-family:var(--body);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.12em;
+    padding:7px 12px;
+    border:2px solid var(--gold);
+    border-radius:3px;
+    transform:rotate(-4deg);
+    color:var(--gold);
+    white-space:nowrap;
+    background:color-mix(in srgb,var(--gold-dk) 10%,transparent);
+  }
+  .stamp.deficit{
+    border-color:var(--rust-dk);
+    color:var(--rust-dk);
+    background:color-mix(in srgb,var(--rust-dk) 12%,transparent);
+  }
+  main{
+    max-width:640px;
+    margin:0 auto;
+    padding:18px 16px 0;
+  }
+  .toolbar{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .toolbar button{
+    flex:1;
+    font-family:var(--body);
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:.04em;
+    padding:10px 8px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--surface);
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .toolbar button:active{background:var(--surface-2);}
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:2px;
+    margin-bottom:20px;
+    box-shadow:0 1px 0 rgba(0,0,0,0.03);
+  }
+  .card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px 10px;
+    border-bottom:1px solid var(--line);
+    gap:8px;
+  }
+  .card-head h2{
+    font-family:var(--display);
+    font-size:21px;
+    font-weight:400;
+    letter-spacing:.02em;
+    margin:0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card-head .tag{
+    font-family:var(--body);
+    font-size:10px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:2px 7px;
+    border-radius:2px;
+  }
+  .tag.in{background:color-mix(in srgb,var(--gold-dk) 16%,transparent);color:var(--gold-dk);}
+  .tag.out{background:color-mix(in srgb,var(--rust-dk) 14%,transparent);color:var(--rust-dk);}
+  .tag.fixed{background:var(--surface-2);color:var(--ink);}
+  .subtotal{
+    font-family:var(--body);
+    font-size:15px;
+    font-weight:600;
+    flex-shrink:0;
+  }
+  .subtotal.in{color:var(--gold-dk);}
+  .subtotal.out{color:var(--rust-dk);}
+  .card-sub{
+    font-size:11.5px;
+    color:var(--muted);
+    padding:8px 16px 0;
+    margin:0;
+    font-style:italic;
+  }
+
+  ul.entries{list-style:none;margin:0;padding:0;}
+  ul.entries li{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    border-bottom:1px dashed var(--line);
+    gap:10px;
+  }
+  ul.entries li:last-child{border-bottom:none;}
+  .checklist-checkbox{
+    width:26px;height:26px;flex-shrink:0;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:14px;font-weight:700;
+    background:var(--btn2);color:transparent;
+  }
+  .checklist-checkbox.done{background:var(--gold-dk);color:var(--ledger-dk);}
+  .checklist-checkbox.urgent{background:var(--rust-dk);}
+  .entry-name{
+    font-size:14px;
+    font-weight:500;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .entry-name span.meta{
+    font-family:var(--body);
+    font-size:10.5px;
+    color:var(--muted);
+    letter-spacing:.03em;
+    margin-top:1px;
+  }
+  .entry-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .entry-amount{
+    font-family:var(--body);
+    font-size:14.5px;
+    font-weight:600;
+  }
+  .entry-amount.in{color:var(--gold-dk);}
+  .entry-amount.out{color:var(--rust-dk);}
+  .del-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:16px;
+    cursor:pointer;
+    padding:2px 4px;
+    line-height:1;
+  }
+  .del-btn:hover{color:var(--rust);}
+
+  .empty{
+    padding:18px 16px;
+    font-size:13px;
+    color:var(--muted);
+    font-style:italic;
+  }
+
+  form.add-form{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:12px 16px 16px;
+    border-top:1px solid var(--line);
+    align-items:center;
+  }
+  form.add-form input, form.add-form select{
+    font-family:var(--body);
+    font-size:13.5px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  form.add-form input[name="name"]{flex:1 1 140px;}
+  form.add-form input[name="amount"]{flex:0 1 90px;}
+  form.add-form select{flex:1 1 110px;}
+  form.add-form button{
+    font-family:var(--body);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.05em;
+    padding:9px 14px;
+    border:none;
+    border-radius:2px;
+    cursor:pointer;
+    color:var(--ink);
+    flex:0 0 auto;
+  }
+  form.add-form.ingreso button{background:var(--ledger);}
+  form.add-form.gasto button{background:var(--rust-dk);}
+  form.add-form.suscripcion button{background:var(--btn2);}
+  form.add-form button:active{opacity:.85;}
+  .checkbox-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12.5px;
+    color:var(--muted);
+    flex:1 1 100%;
+  }
+
+  .footnote{
+    text-align:center;
+    font-family:var(--body);
+    font-size:10.5px;
+    color:var(--muted);
+    letter-spacing:.05em;
+    padding:10px 0 20px;
+  }
+  .status-msg{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    font-family:var(--body);
+    padding:6px 0 0;
+    min-height:14px;
+  }
+
+  /* Report panel */
+  .report-panel{display:none;}
+  .report-panel.open{display:block;}
+  .report-row{
+    padding:10px 16px;
+    border-bottom:1px dashed var(--line);
+  }
+  .report-row:last-child{border-bottom:none;}
+  .report-row-top{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--body);
+    font-size:12.5px;
+    margin-bottom:5px;
+  }
+  .bar-bg{
+    height:6px;
+    background:var(--surface-2);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    background:var(--rust-dk);
+    border-radius:3px;
+  }
+  .bar-fill.in{background:var(--gold-dk);}
+
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(15,25,20,0.55);
+    z-index:50;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--paper);
+    width:100%;
+    max-width:640px;
+    max-height:82vh;
+    overflow-y:auto;
+    border-radius:10px 10px 0 0;
+    border:1px solid var(--line);
+    padding-bottom:20px;
+  }
+  .modal-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px;
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    background:var(--paper);
+  }
+  .modal-head h2{
+    font-family:var(--display);
+    font-size:22px;
+    letter-spacing:.02em;
+    margin:0;
+  }
+  .modal-close{
+    background:none;
+    border:none;
+    font-size:20px;
+    cursor:pointer;
+    color:var(--muted);
+  }
+</style>
+
+<style id="tokens">
+:root{
+  --paper:#0E1220; --paper-line:#0E1220; --card-bg:#161B2E; --card-border:#2A3252;
+  --surface:#161B2E; --surface-2:#1F2642; --line:#2A3252; --deep:#0A0D18;
+  --ink:#EDEFF7; --muted:#9099B9;
+  --ledger:#121830; --ledger-dk:#0A0D18;
+  --gold:#8EA0FF; --gold-dk:#4FD6C0; --rust:#FF7B93; --rust-dk:#FF7B93;
+  --btn2:#2B3566; --on-accent:#0E1220; --shadow:none; --nav-bg:rgba(18,24,48,.88);
+  color-scheme:dark;}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --paper:#F3F4FA; --paper-line:#F3F4FA; --card-bg:#FFFFFF; --card-border:#DFE3F2;
+  --surface:#FFFFFF; --surface-2:#ECEFFA; --line:#DFE3F2; --deep:#E7EAF7;
+  --ink:#141A30; --muted:#5B6488;
+  --ledger:#E9ECFA; --ledger-dk:#DDE2F7;
+  --gold:#4256E6; --gold-dk:#0B8F7C; --rust:#D3304D; --rust-dk:#D3304D;
+  --btn2:#DCE2FF; --on-accent:#FFFFFF; --shadow:0 6px 20px rgba(40,50,110,.08); --nav-bg:rgba(255,255,255,.9);
+  color-scheme:light;} }
+:root[data-theme="light"]{
+  --paper:#F3F4FA; --paper-line:#F3F4FA; --card-bg:#FFFFFF; --card-border:#DFE3F2;
+  --surface:#FFFFFF; --surface-2:#ECEFFA; --line:#DFE3F2; --deep:#E7EAF7;
+  --ink:#141A30; --muted:#5B6488;
+  --ledger:#E9ECFA; --ledger-dk:#DDE2F7;
+  --gold:#4256E6; --gold-dk:#0B8F7C; --rust:#D3304D; --rust-dk:#D3304D;
+  --btn2:#DCE2FF; --on-accent:#FFFFFF; --shadow:0 6px 20px rgba(40,50,110,.08); --nav-bg:rgba(255,255,255,.9);
+  color-scheme:light;}
+:root[data-theme="dark"]{
+  --paper:#0E1220; --paper-line:#0E1220; --card-bg:#161B2E; --card-border:#2A3252;
+  --surface:#161B2E; --surface-2:#1F2642; --line:#2A3252; --deep:#0A0D18;
+  --ink:#EDEFF7; --muted:#9099B9;
+  --ledger:#121830; --ledger-dk:#0A0D18;
+  --gold:#8EA0FF; --gold-dk:#4FD6C0; --rust:#FF7B93; --rust-dk:#FF7B93;
+  --btn2:#2B3566; --on-accent:#0E1220; --shadow:none; --nav-bg:rgba(18,24,48,.88);
+  color-scheme:dark;}
+</style>
+<style id="weekly-control-v2">
+.weekly-control-card{margin:16px 0}
+.weekly-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.weekly-grid label,.gas-vehicle-field{display:flex;flex-direction:column;gap:6px;font-size:.88rem}
+.weekly-grid select,.gas-vehicle-field select{padding:10px;border-radius:10px}
+.week-status{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
+.week-status div{padding:10px;border-radius:12px;background:rgba(127,127,127,.10);display:flex;flex-direction:column;gap:4px}
+.week-status span{font-size:.72rem;opacity:.7}
+.week-status strong{font-size:.95rem}
+@media(max-width:700px){
+  .weekly-grid{grid-template-columns:1fr}
+  .week-status{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+<style id="theme-app">
+:root{ --r:18px; --display:'Bricolage Grotesque','Figtree',system-ui,sans-serif; --body:'Figtree',system-ui,sans-serif; }
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper); background-image:none; font-family:var(--body); font-size:15.5px; line-height:1.45;
+  font-variant-numeric:tabular-nums; padding-bottom:calc(104px + env(safe-area-inset-bottom)); color:var(--ink)}
+
+/* Cabecera: el balance es la pieza protagonista */
+header{background:var(--paper); color:var(--ink); padding:calc(14px + env(safe-area-inset-top)) 18px 18px; border-bottom:none; overflow:visible}
+header::after{display:none}
+.hdr-top{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+h1{font-family:var(--display); font-weight:700; font-size:19.5px; white-space:nowrap; letter-spacing:-.01em; margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis}
+.stamp{transform:none; border-radius:999px; border:1px solid color-mix(in srgb,var(--gold-dk) 55%,transparent); color:var(--gold-dk);
+  background:color-mix(in srgb,var(--gold-dk) 12%,transparent); font:600 11.5px var(--body); letter-spacing:.02em; padding:6px 10px; flex:none; white-space:nowrap}
+.stamp.deficit{border-color:color-mix(in srgb,var(--rust-dk) 55%,transparent); color:var(--rust-dk); background:color-mix(in srgb,var(--rust-dk) 12%,transparent)}
+#btnTheme{flex:none;width:40px;height:40px;min-height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:17px;cursor:pointer}
+.month-nav{margin-bottom:18px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px; gap:6px}
+.month-nav button{width:40px;height:40px;border-radius:50%;border:none;background:var(--surface-2);color:var(--ink);font-size:20px}
+.month-label{font:600 15.5px var(--body); letter-spacing:0; color:var(--ink)}
+.balance-label{font:500 14px var(--body); letter-spacing:0; text-transform:none; color:var(--muted); margin:0 0 2px}
+.balance-amount{font-family:var(--display); font-weight:800; font-size:clamp(46px,14vw,60px); line-height:1; letter-spacing:-.03em; color:var(--ink)}
+main{padding:6px 14px 0}
+
+/* Tarjetas */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden}
+.card-head{border-bottom:1px solid var(--line); padding:15px 16px 11px}
+.card-head h2{font-family:var(--display); font-weight:650; font-size:19px; letter-spacing:-.01em; color:var(--ink)}
+.card-sub{font-size:13px; font-style:normal}
+.empty{font-style:normal}
+ul.entries li{border-bottom:1px solid var(--line); padding:13px 16px}
+.entry-name{font-size:15.5px; font-weight:600}
+.entry-name span.meta{font-size:12.5px; color:var(--muted)}
+.entry-amount{font-size:15.5px; font-weight:700}
+.del-btn{min-width:40px;min-height:40px;font-size:17px;border-radius:12px;color:var(--muted)}
+.del-btn:active{background:var(--surface-2)}
+
+/* Hero: gastado vs presupuesto, con el ritmo del mes */
+#heroTotalCard{border-radius:var(--r)!important; background:var(--surface)!important; border:1px solid var(--line)!important; padding:18px 18px 16px!important; box-shadow:var(--shadow)}
+#heroLabel{font:500 13.5px var(--body)!important; color:var(--muted)!important; text-align:left!important; margin:0 0 4px!important}
+#heroAmount{font-family:var(--display)!important; font-weight:750!important; font-size:34px!important; letter-spacing:-.025em!important; text-align:left!important; margin:0 0 14px!important}
+#heroTotalCard .bar-bg{position:relative; overflow:visible; height:10px!important; background:var(--surface-2); border-radius:99px}
+#heroTotalCard .bar-fill{border-radius:99px}
+#heroPaceTick{position:absolute; top:-5px; bottom:-5px; width:3px; margin-left:-1.5px; border-radius:2px; background:var(--ink); opacity:.9; display:none}
+#heroPaceNote{font:500 13px var(--body); color:var(--muted); margin:12px 0 0}
+#heroPaceNote b{color:var(--ink); font-weight:650}
+#heroPaceNote.hot b{color:var(--rust-dk)}
+.bar-bg{height:8px; background:var(--surface-2); border-radius:99px}
+.bar-fill{border-radius:99px}
+
+/* Semanal / Mensual y pestañas */
+[style*="border-radius:22px"]{border-radius:999px!important; background:var(--surface)!important; border-color:var(--line)!important}
+.period-toggle-btn,.data-tab-btn,.checklist-toggle-btn,.pattern-toggle-btn{font:600 14px var(--body)!important; letter-spacing:0!important; min-height:44px}
+
+/* Legibilidad y tacto */
+[style*="font-size:6.8px"],[style*="font-size:7px"],[style*="font-size:7.5px"],[style*="font-size:8px"],[style*="font-size:8.5px"],[style*="font-size:9px"],[style*="font-size:9.5px"],[style*="font-size:10px"],[style*="font-size:10.5px"]{font-size:12px!important}
+[style*="text-transform:uppercase"]{text-transform:none!important; letter-spacing:0!important}
+.eyebrow{text-transform:none; letter-spacing:0}
+.footnote,.status-msg{font:500 12.5px var(--body); letter-spacing:0}
+button{min-height:44px; -webkit-tap-highlight-color:transparent; font-family:var(--body)}
+.toolbar button{min-height:44px; border-radius:12px; font:600 13.5px var(--body); letter-spacing:0; background:var(--surface); border-color:var(--line)}
+input,select{font-family:var(--body)}
+form.add-form input,form.add-form select,input[type=text],input[type=number],input[type=date],select{min-height:46px; border-radius:12px!important; font-size:16px!important; background:var(--paper)!important; color:var(--ink)!important; border:1px solid var(--line)!important}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold); outline-offset:1px}
+form.add-form button{border-radius:12px; font:700 14.5px var(--body); letter-spacing:0; min-width:88px; color:var(--on-accent)}
+form.add-form.ingreso button{background:var(--gold)}
+form.add-form.gasto button{background:var(--rust-dk)}
+form.add-form.suscripcion button{background:var(--btn2); color:var(--ink)}
+[style*="border-radius:2px"]{border-radius:12px!important}
+button[type=submit][style*="background:var(--ledger)"],button[style*="background:var(--ledger);color:var(--ink)"]{background:var(--gold)!important;color:var(--on-accent)!important;font-weight:700!important}
+.tag{font-family:var(--body)!important; font-weight:600; letter-spacing:0; text-transform:none; border-radius:999px; padding:3px 9px}
+.modal-overlay{background:rgba(6,9,20,.62); backdrop-filter:blur(3px)}
+.modal-box{background:var(--surface); border-radius:24px 24px 0 0; max-height:90vh; border-color:var(--line)}
+.modal-head{background:var(--surface)}
+.modal-head h2{font-family:var(--display); font-weight:650}
+
+/* Barra inferior flotante */
+#bottomNav{position:fixed; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:40; display:grid; grid-template-columns:repeat(5,1fr); align-items:end;
+  padding:6px; background:var(--nav-bg); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--line); border-radius:26px; box-shadow:0 10px 30px rgba(0,0,0,.28)}
+#bottomNav button{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:none; background:none; color:var(--muted); min-height:52px; border-radius:18px; cursor:pointer}
+#bottomNav .ni{font-size:20px; line-height:1}
+#bottomNav .nl{font-size:11.5px; font-weight:600}
+#bottomNav button.active{color:var(--gold); background:color-mix(in srgb,var(--gold) 12%,transparent)}
+#bottomNav .nav-fab{background:none!important}
+#bottomNav .nav-fab .ni{display:flex;align-items:center;justify-content:center;width:54px;height:54px;margin-top:-24px;border-radius:50%;background:var(--gold);color:var(--on-accent);font-size:30px;font-weight:300;box-shadow:0 8px 20px color-mix(in srgb,var(--gold) 45%,transparent),0 0 0 5px var(--paper)}
+#bottomNav .nav-fab .nl{color:var(--muted)}
+#bottomNav .nbadge{position:absolute; top:3px; left:calc(50% + 8px); min-width:18px; height:18px; padding:0 5px; border-radius:99px; background:var(--rust-dk); color:var(--on-accent); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center}
+#bottomNav .nbadge[hidden]{display:none}
+
+/* Aviso de versión nueva */
+#updateToast{position:fixed; left:14px; right:14px; bottom:calc(100px + env(safe-area-inset-bottom)); z-index:60; display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:16px; background:var(--ink); color:var(--paper); font:600 14px var(--body); box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#updateToast[hidden]{display:none}
+#updateToast button{margin-left:auto; min-height:36px; border:none; border-radius:10px; padding:0 14px; background:var(--gold); color:var(--on-accent); font:700 13.5px var(--body); cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-top">
+    <h1>Presupuesto Familiar</h1>
+    <div class="stamp" id="balanceStamp">SUPERÁVIT</div>
+    <button id="btnTheme" type="button" aria-label="Cambiar tema">◐</button>
+  </div>
+  <div class="month-nav">
+    <button id="prevMonth" aria-label="Mes anterior">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button id="nextMonth" aria-label="Mes siguiente">›</button>
+  </div>
+  <p class="balance-label">Balance del mes</p>
+  <div class="balance-amount" id="balanceAmount">$0.00</div>
+</header>
+
+<main>
+<section class="card" id="weeklyControlCard" style="padding:12px 14px;margin:16px 0;">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;">
+    <span style="font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--gold);">📅 Esta semana</span>
+    <span id="weekRangeLabel" style="font-family:var(--body);font-size:10px;color:var(--muted);">—</span>
+  </div>
+  <div style="margin:6px 0 10px;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+    <div>
+      <span id="todayWeekLabel" style="font-family:var(--body);font-size:16px;font-weight:700;color:var(--ink);">—</span>
+      <span id="weekSubLabel" style="font-family:var(--body);font-size:10.5px;color:var(--muted);margin-left:6px;">—</span>
+    </div>
+    <span id="checklistPendingInline" style="display:none;font-family:var(--body);font-size:10.5px;color:var(--rust-dk);cursor:pointer;">Confirmar (<span id="checklistPendingCountInline">0</span>) →</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">
+    <div style="background:var(--surface-2);border-radius:5px;padding:8px 6px;text-align:center;">
+      <div style="font-family:var(--body);font-size:6.8px;color:var(--muted);letter-spacing:.03em;">Disponible</div>
+      <div id="weekMoneyLabel" style="font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--gold-dk);margin-top:3px;">$0.00</div>
+    </div>
+    <div style="background:var(--surface-2);border-radius:5px;padding:8px 6px;text-align:center;">
+      <div style="font-family:var(--body);font-size:6.8px;color:var(--muted);letter-spacing:.03em;">Gastado</div>
+      <div id="weekSpentLabelCompact" style="font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--rust-dk);margin-top:3px;">$0.00</div>
+    </div>
+    <div style="background:var(--surface-2);border-radius:5px;padding:8px 6px;text-align:center;">
+      <div style="font-family:var(--body);font-size:6.8px;color:var(--muted);letter-spacing:.03em;">Límite por día</div>
+      <div id="dailyLimitLabel" style="font-family:var(--body);font-size:12.5px;font-weight:600;color:var(--gold-dk);margin-top:3px;">$0.00</div>
+    </div>
+  </div>
+</section>
+
+
+<datalist id="categoryList">
+  <option value="Vivienda"></option>
+  <option value="Compra de Comida Fastfoods"></option>
+  <option value="Compras de Comida Supermercado"></option>
+  <option value="Compra de Comida Restaurante"></option>
+  <option value="Compra de Comida Misc"></option>
+  <option value="Gasolina"></option>
+  <option value="Transporte"></option>
+  <option value="Servicios"></option>
+  <option value="Utilidades"></option>
+  <option value="Deudas de Utilidades"></option>
+  <option value="Deudas"></option>
+  <option value="Ahorros"></option>
+  <option value="Entretenimiento"></option>
+  <option value="Deporte"></option>
+  <option value="Baile"></option>
+  <option value="Educación"></option>
+  <option value="Compras Misc Casa"></option>
+  <option value="Compras Misc Personal"></option>
+  <option value="Ropa"></option>
+  <option value="Otro"></option>
+</datalist>
+
+<datalist id="categoryBudgetList">
+  <option value="Vivienda"></option>
+  <option value="Compra de Comida Fastfoods"></option>
+  <option value="Compras de Comida Supermercado"></option>
+  <option value="Compra de Comida Restaurante"></option>
+  <option value="Compra de Comida Misc"></option>
+  <option value="Gasolina"></option>
+  <option value="Gasolina Kia"></option>
+  <option value="Gasolina Mazda"></option>
+  <option value="Gasolina Otro"></option>
+  <option value="Transporte"></option>
+  <option value="Servicios"></option>
+  <option value="Utilidades"></option>
+  <option value="Deudas de Utilidades"></option>
+  <option value="Deudas"></option>
+  <option value="Ahorros"></option>
+  <option value="Entretenimiento"></option>
+  <option value="Deporte"></option>
+  <option value="Baile"></option>
+  <option value="Educación"></option>
+  <option value="Compras Misc Casa"></option>
+  <option value="Compras Misc Personal"></option>
+  <option value="Ropa"></option>
+  <option value="Otro"></option>
+</datalist>
+
+<div id="dashboardView">
+
+  <div id="newMonthBanner" style="display:none;background:var(--card-bg);border:1px solid var(--gold);border-radius:6px;padding:12px 14px;margin-bottom:16px;">
+    <p style="font-family:var(--body);font-size:11.5px;color:var(--gold);margin:0 0 8px;">📦 Nuevo mes detectado. Nada de lo anterior se borró — sigue guardado en el <b>Historial</b>. Te recomendamos exportar un respaldo igual, por si acaso.</p>
+    <div style="display:flex;gap:8px;">
+      <button id="btnNewMonthExport" type="button" style="flex:1;font-family:var(--body);font-size:11.5px;font-weight:600;padding:9px;border:none;border-radius:2px;background:var(--ledger-dk);color:var(--gold);cursor:pointer;">⬇ Exportar respaldo</button>
+      <button id="btnNewMonthDismiss" type="button" style="font-family:var(--body);font-size:11.5px;padding:9px 12px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--muted);cursor:pointer;">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="toggle-pill-wrap" style="display:flex;background:var(--card-bg);border:1px solid var(--card-border);border-radius:22px;padding:4px;margin-bottom:16px;">
+    <button id="btnPeriodWeekly" type="button" class="period-toggle-btn" style="flex:1;padding:10px;border:none;border-radius:18px;font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;background:var(--ledger-dk);color:var(--gold);">Semanal</button>
+    <button id="btnPeriodMonthly" type="button" class="period-toggle-btn" style="flex:1;padding:10px;border:none;border-radius:18px;font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;background:transparent;color:var(--muted);">Mensual</button>
+  </div>
+
+  <div id="heroTotalCard" style="background:var(--ledger-dk);border:1px solid var(--card-border);border-radius:6px;padding:12px 14px 11px;margin-bottom:16px;">
+    <p id="heroLabel" style="font-family:var(--body);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 6px;text-align:center;">Presupuesto Total vs Gastado (Semana)</p>
+    <p id="heroAmount" style="font-family:var(--display);font-size:22px;letter-spacing:.02em;color:var(--ink);margin:0 0 8px;text-align:center;">$0 / $0</p>
+    <div class="bar-bg"><div class="bar-fill" id="heroBar" style="width:0%;"></div><div id="heroPaceTick"></div></div>
+    <p id="heroPaceNote"></p>
+    <div style="display:flex;justify-content:space-between;font-family:var(--body);font-size:9px;color:var(--muted);">
+      <span id="heroEstSemana">Estimado semana: —</span>
+      <span id="heroEstMes">Estimado mes: —</span>
+    </div>
+  </div>
+
+  <div style="display:flex;background:var(--card-bg);border:1px solid var(--card-border);border-radius:22px;padding:4px;margin-bottom:16px;">
+    <button id="tabBtnIngresos" type="button" class="data-tab-btn" style="flex:1;padding:10px 4px;border:none;border-radius:18px;font-family:var(--body);font-size:11.5px;font-weight:600;letter-spacing:.02em;cursor:pointer;background:var(--ledger-dk);color:var(--gold);">Ingresos</button>
+    <button id="tabBtnRecurrentes" type="button" class="data-tab-btn" style="flex:1;padding:10px 4px;border:none;border-radius:18px;font-family:var(--body);font-size:11.5px;font-weight:600;letter-spacing:.02em;cursor:pointer;background:transparent;color:var(--muted);">Recurrentes</button>
+    <button id="tabBtnGastos" type="button" class="data-tab-btn" style="flex:1;padding:10px 4px;border:none;border-radius:18px;font-family:var(--body);font-size:11.5px;font-weight:600;letter-spacing:.02em;cursor:pointer;background:transparent;color:var(--muted);">Gastos</button>
+  </div>
+
+  <div class="card" id="weeklyCard">
+    <div class="card-head">
+      <h2>Esta Semana</h2>
+      <span class="stamp" id="weeklyStamp" style="font-size:10px;padding:5px 9px;">—</span>
+    </div>
+    <div style="padding:12px 16px;" id="weeklyBody"></div>
+  </div>
+
+  <div class="card" id="budgetCard">
+    <div class="card-head">
+      <h2>Presupuesto de Gastos</h2>
+      <div class="stamp" id="budgetStamp" style="font-size:10px;padding:5px 9px;">SIN META</div>
+    </div>
+    <div style="padding:12px 16px;">
+      <div class="report-row-top" style="margin-bottom:6px;">
+        <span id="budgetSpentLabel">Gastado: $0.00</span>
+        <span id="budgetGoalLabel">Meta: —</span>
+      </div>
+      <div class="bar-bg" style="height:9px;margin-bottom:10px;">
+        <div class="bar-fill" id="budgetBar" style="width:0%;"></div>
+      </div>
+      <form id="formBudget" style="display:flex;gap:8px;margin-bottom:4px;">
+        <input type="number" id="budgetInput" placeholder="Presupuesto mensual de gastos $" step="0.01" min="0"
+          style="flex:1;font-family:var(--body);font-size:13.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);">
+        <button type="submit" style="font-family:var(--body);font-size:12px;font-weight:600;padding:9px 14px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">Guardar</button>
+      </form>
+      <p id="highestExpenseLine" style="font-size:12.5px;color:var(--muted);margin:10px 0 0;font-style:italic;"></p>
+      <p id="paceLine" style="font-size:12.5px;color:var(--muted);margin:6px 0 0;font-style:italic;"></p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button id="btnReport">📊 Ver informe del mes</button>
+    <button id="btnExport">⬇ Exportar respaldo</button>
+  </div>
+  <div class="toolbar">
+    <button id="btnImport">⬆ Importar respaldo</button>
+    <button id="btnInstall" style="display:none;">📲 Instalar app</button>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+  </div>
+
+  <div class="card" id="spendPatternCard">
+    <div class="card-head">
+      <h2>Patrón de Gasto</h2>
+    </div>
+    <div style="display:flex;background:var(--surface-2);border-radius:18px;padding:3px;margin:0 16px 12px;">
+      <button id="btnPatternWeekday" type="button" class="pattern-toggle-btn" style="flex:1;padding:7px;border:none;border-radius:15px;font-family:var(--body);font-size:10px;font-weight:600;cursor:pointer;background:var(--ledger-dk);color:var(--gold);">Día de semana</button>
+      <button id="btnPatternMonthly" type="button" class="pattern-toggle-btn" style="flex:1;padding:7px;border:none;border-radius:15px;font-family:var(--body);font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);">Mensual</button>
+    </div>
+    <div id="spendPatternBody" style="padding:0 16px 16px;"></div>
+  </div>
+
+  <div class="card" id="savingGoalCard">
+    <div class="card-head"><h2>Meta de Ahorro</h2><div class="subtotal in" id="savingGoalStatus">$0.00</div></div>
+    <div style="padding:12px 16px;">
+      <div class="report-row-top"><span id="savingSpentLabel">Ahorrado: $0.00</span><span id="savingGoalLabel">Meta: —</span></div>
+      <div class="bar-bg" style="height:9px;margin-bottom:10px;"><div class="bar-fill in" id="savingBar" style="width:0%;"></div></div>
+      <form id="formSavingGoal" style="display:flex;gap:8px;margin-bottom:4px;">
+        <input type="number" id="savingGoalInput" placeholder="Meta de ahorro mensual $" step="0.01" min="0" style="flex:1;font-family:var(--body);font-size:13.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);">
+        <button type="submit" style="font-family:var(--body);font-size:12px;font-weight:600;padding:9px 14px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">Guardar</button>
+      </form>
+      <p id="savingAdvice" style="font-size:12px;color:var(--muted);margin:8px 0 0;font-style:italic;"></p>
+    </div>
+  </div>
+
+  <div class="card" id="budgetHealthCard">
+    <div class="card-head">
+      <h2>📊 Salud del Presupuesto</h2>
+    </div>
+    <div id="budgetHealthBody" style="padding:12px 16px;"></div>
+  </div>
+
+  <div class="card" id="categoryBudgetCard">
+    <div class="card-head">
+      <h2>Presupuesto por Categoría <span id="categoryBudgetPeriodLabel" style="font-size:11px;color:var(--muted);font-family:var(--body);font-weight:400;">(gasolina/comida: semana + mes)</span></h2>
+    </div>
+    <p class="card-sub">Combina lo recurrente y lo suelto de esa misma categoría (ej. Gasolina en Suscripciones + Gasolina en Gastos).</p>
+    <div id="listCategoryBudgets" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px;"></div>
+    <div class="empty" id="emptyCategoryBudgets">No has puesto presupuestos por categoría todavía.</div>
+    <form id="formCategoryBudget" style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line);">
+      <input type="text" id="categoryBudgetName" list="categoryBudgetList" placeholder="Categoría (ej. Gasolina Kia)" required
+        style="flex:1 1 140px;font-family:var(--body);font-size:13.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);">
+      <input type="number" id="categoryBudgetAmount" placeholder="$ al mes" step="0.01" min="0" required
+        style="flex:0 1 100px;font-family:var(--body);font-size:13.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);">
+      <button type="submit" style="font-family:var(--body);font-size:12px;font-weight:600;padding:9px 14px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">Guardar</button>
+    </form>
+  </div>
+
+  <button id="btnGoToChecklist" type="button" style="width:100%;margin-bottom:12px;font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.03em;padding:14px;border:1px solid var(--gold);border-radius:2px;background:transparent;color:var(--gold);cursor:pointer;">✅ Checklist de Pagos →</button>
+
+  <button id="btnGoToHistorial" type="button" style="width:100%;margin-bottom:20px;font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.03em;padding:14px;border:1px solid var(--line);border-radius:2px;background:transparent;color:var(--muted);cursor:pointer;">📜 Historial de Meses →</button>
+
+  <div class="card" id="syncCard">
+    <div class="card-head">
+      <h2>Sincronizar con tu pareja</h2>
+      <span class="stamp" id="syncStamp" style="font-size:10px;padding:5px 9px;">SIN CONECTAR</span>
+    </div>
+    <div style="padding:12px 16px;" id="syncBody"></div>
+  </div>
+
+  <div class="card" id="commitmentCard">
+    <div class="card-head">
+      <h2>Disponible tras compromisos</h2>
+    </div>
+    <div style="padding:4px 16px 14px;" id="commitmentBody"></div>
+  </div>
+
+  <p class="status-msg" id="statusMsg"></p>
+  <p class="footnote">Tus datos se guardan automáticamente en este dispositivo</p>
+
+</div>
+
+<div id="ingresosView" style="display:none;">
+
+  <button id="btnBackFromIngresos" type="button" style="width:100%;margin-bottom:16px;font-family:var(--body);font-size:12.5px;font-weight:600;padding:11px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);cursor:pointer;">← Volver al Dashboard</button>
+
+  <div style="margin-bottom:16px;">
+    <p style="font-family:var(--body);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;">Libro de Cuentas</p>
+    <h1 style="font-size:26px;margin:0;">Ingresos</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Ingresos Recurrentes <span class="tag fixed">recurrente</span></h2>
+      <div class="subtotal in" id="totalIngresosRecurrentes">$0.00</div>
+      </div>
+    <p class="card-sub" style="display:flex;justify-content:space-between;">
+      <span>Se aplican solos cada mes, sin tener que volver a escribirlos.</span>
+      <span id="progresoIngresosRecurrentes" style="font-family:var(--body);font-style:normal;white-space:nowrap;margin-left:8px;"></span>
+    </p>
+    <ul class="entries" id="listIngresosRecurrentes"></ul>
+    <div class="empty" id="emptyIngresosRecurrentes">No tienes ingresos recurrentes.</div>
+    <p id="totalAnualIngresosRecurrentes" style="font-family:var(--body);font-size:12px;color:var(--muted);padding:0 16px 10px;margin:0;text-align:right;"></p>
+    <form class="add-form ingreso" id="formIngresoRecurrente">
+      <input type="text" name="name" placeholder="Ej. Sueldo, pensión..." required>
+      <select name="person">
+        <option value="Yo">Yo</option>
+        <option value="Esposa">Esposa</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <input type="number" name="amount" placeholder="$" step="0.01" min="0" required>
+      <select name="frequency" class="freq-select">
+        <option value="monthly">Cada mes</option>
+        <option value="biweekly">Cada 2 semanas (≈2 veces/mes)</option>
+        <option value="weekly">Cada semana (≈4 veces/mes)</option>
+      </select>
+      <select name="payDayWeek" class="payday-week">
+        <option value="0">Domingo</option>
+        <option value="1">Lunes</option>
+        <option value="2">Martes</option>
+        <option value="3">Miércoles</option>
+        <option value="4">Jueves</option>
+        <option value="5" selected>Viernes</option>
+        <option value="6">Sábado</option>
+      </select>
+      <input type="number" name="payDayMonth" class="payday-month" placeholder="Día del mes (1-31)" min="1" max="31" style="display:none;">
+      <label class="checkbox-row" style="flex:1 1 100%;">
+        <input type="checkbox" name="requiresConfirmation">
+        No es 100% garantizado (ej. renta) — pedir confirmación cada mes
+      </label>
+      <label class="checkbox-row" style="flex:1 1 100%;">
+        <input type="checkbox" class="toggle-active-window" id="toggleActiveWindowInc">
+        Empieza o termina en un mes específico
+      </label>
+      <div class="active-window-fields" id="activeWindowFieldsInc" style="display:none;flex:1 1 100%;gap:8px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;">Activo desde</label>
+          <input type="month" name="activeFrom">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;">Activo hasta</label>
+          <input type="month" name="activeUntil">
+        </div>
+      </div>
+      <button type="submit">+ Añadir</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Ingresos <span class="tag in">entra</span></h2>
+      <div class="subtotal in" id="totalIngresos">$0.00</div>
+    </div>
+    <ul class="entries" id="listIngresos"></ul>
+    <div class="empty" id="emptyIngresos">No hay ingresos únicos este mes.</div>
+    <form class="add-form ingreso" id="formIngreso">
+      <input type="text" name="name" placeholder="Ej. Bono, reembolso..." required>
+      <select name="person">
+        <option value="Yo">Yo</option>
+        <option value="Esposa">Esposa</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <input type="number" name="amount" placeholder="$" step="0.01" min="0" required>
+      <input type="date" name="date" class="date-input">
+      <button type="submit">+ Añadir</button>
+    </form>
+  </div>
+
+</div>
+
+<div id="gastosView" style="display:none;">
+
+  <button id="btnBackFromGastos" type="button" style="width:100%;margin-bottom:16px;font-family:var(--body);font-size:12.5px;font-weight:600;padding:11px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);cursor:pointer;">← Volver al Dashboard</button>
+
+  <div style="margin-bottom:16px;">
+    <p style="font-family:var(--body);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;">Libro de Cuentas</p>
+    <h1 style="font-size:26px;margin:0;">Gastos</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Gastos <span class="tag out">sale</span></h2>
+      <div class="subtotal out" id="totalGastos">$0.00</div>
+    </div>
+    <ul class="entries" id="listGastos"></ul>
+    <div class="empty" id="emptyGastos">No hay gastos únicos este mes.</div>
+    <form class="add-form gasto" id="formGasto">
+      <input type="text" name="name" placeholder="Ej. Compra, salida..." required>
+      <input type="text" name="category" list="categoryList" placeholder="Categoría (ej. Gasolina)" required>
+      <input type="number" name="amount" placeholder="$" step="0.01" min="0" required>
+      <select name="vehicle" aria-label="Vehículo"><option value="">Vehículo (opcional)</option><option value="Mazda">Mazda</option><option value="Kia">Kia</option><option value="Otro">Otro vehículo</option></select>
+      <input type="number" name="gallons" placeholder="Galones (opcional)" step="0.01" min="0">
+      <input type="number" name="priceGal" placeholder="$ / galón (opcional)" step="0.001" min="0">
+      <input type="date" name="date" class="date-input">
+      <button type="submit">+ Añadir</button>
+    </form>
+  </div>
+
+</div>
+
+<div id="recurrentesView" style="display:none;">
+
+  <button id="btnBackFromRecurrentes" type="button" style="width:100%;margin-bottom:16px;font-family:var(--body);font-size:12.5px;font-weight:600;padding:11px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);cursor:pointer;">← Volver al Dashboard</button>
+
+  <div style="margin-bottom:16px;">
+    <p style="font-family:var(--body);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;">Libro de Cuentas</p>
+    <h1 style="font-size:26px;margin:0;">Recurrentes</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Suscripciones y Pagos Fijos <span class="tag fixed">recurrente</span></h2>
+      <div class="subtotal out" id="totalSuscripciones">$0.00</div>
+    </div>
+    <p class="card-sub" style="display:flex;justify-content:space-between;">
+      <span>Solo se restan del balance cuando las confirmas en el ✅ Checklist de Pagos.</span>
+      <span id="progresoSuscripciones" style="font-family:var(--body);font-style:normal;white-space:nowrap;margin-left:8px;"></span>
+    </p>
+    <ul class="entries" id="listSuscripciones"></ul>
+    <div class="empty" id="emptySuscripciones">No tienes gastos recurrentes.</div>
+    <p id="totalAnualSuscripciones" style="font-family:var(--body);font-size:12px;color:var(--muted);padding:0 16px 10px;margin:0;text-align:right;"></p>
+    <form class="add-form suscripcion" id="formSuscripcion">
+      <input type="text" name="name" placeholder="Ej. Netflix, gym, préstamo..." required>
+      <input type="text" name="category" list="categoryList" placeholder="Categoría (ej. Gasolina)" required>
+      <input type="number" name="amount" placeholder="$" step="0.01" min="0" required>
+      <select name="frequency" class="freq-select">
+        <option value="once">Solo una vez (no recurrente)</option>
+        <option value="monthly" selected>Cada mes</option>
+        <option value="biweekly">Cada 2 semanas (≈2 veces/mes)</option>
+        <option value="weekly">Cada semana (≈4 veces/mes)</option>
+        <option value="yearly">Anual (ej. marbete, seguro)</option>
+      </select>
+      <select name="payMonth" class="pay-month" style="display:none;">
+        <option value="1">Enero</option>
+        <option value="2">Febrero</option>
+        <option value="3">Marzo</option>
+        <option value="4">Abril</option>
+        <option value="5">Mayo</option>
+        <option value="6">Junio</option>
+        <option value="7">Julio</option>
+        <option value="8">Agosto</option>
+        <option value="9">Septiembre</option>
+        <option value="10">Octubre</option>
+        <option value="11">Noviembre</option>
+        <option value="12">Diciembre</option>
+      </select>
+      <select name="payDayWeek" class="payday-week">
+        <option value="0">Domingo</option>
+        <option value="1">Lunes</option>
+        <option value="2">Martes</option>
+        <option value="3">Miércoles</option>
+        <option value="4">Jueves</option>
+        <option value="5" selected>Viernes</option>
+        <option value="6">Sábado</option>
+      </select>
+      <input type="number" name="payDayMonth" class="payday-month" placeholder="Día del mes (1-31)" min="1" max="31" style="display:none;">
+      <input type="date" name="onceDate" class="once-date date-input" style="display:none;">
+      <label class="checkbox-row" style="flex:1 1 100%;">
+        <input type="checkbox" class="toggle-active-window" id="toggleActiveWindowSub">
+        Empieza o termina en un mes específico (ej. deuda que se salda)
+      </label>
+      <div class="active-window-fields" id="activeWindowFieldsSub" style="display:none;flex:1 1 100%;gap:8px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;">Activo desde</label>
+          <input type="month" name="activeFrom">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;">Activo hasta</label>
+          <input type="month" name="activeUntil">
+        </div>
+      </div>
+      <button type="submit">+ Añadir</button>
+    </form>
+  </div>
+
+</div>
+
+<div id="checklistView" style="display:none;">
+
+  <button id="btnBackFromChecklist" type="button" style="width:100%;margin-bottom:16px;font-family:var(--body);font-size:12.5px;font-weight:600;padding:11px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);cursor:pointer;">← Volver al Dashboard</button>
+
+  <div style="margin-bottom:4px;">
+    <p style="font-family:var(--body);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;">Libro de Cuentas</p>
+    <h1 style="font-size:26px;margin:0 0 14px;">Checklist de Pagos</h1>
+  </div>
+
+  <div style="display:flex;background:var(--card-bg);border:1px solid var(--card-border);border-radius:22px;padding:4px;margin-bottom:16px;">
+    <button id="btnChecklistWeekly" type="button" class="checklist-toggle-btn" style="flex:1;padding:10px;border:none;border-radius:18px;font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;background:transparent;color:var(--muted);">Semanal</button>
+    <button id="btnChecklistMonthly" type="button" class="checklist-toggle-btn" style="flex:1;padding:10px;border:none;border-radius:18px;font-family:var(--body);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;background:var(--ledger-dk);color:var(--gold);">Mensual</button>
+  </div>
+
+  <div style="margin-bottom:8px;">
+    <p id="checklistProgressLabel" style="font-family:var(--body);font-size:10px;color:var(--muted);margin:0 0 6px;">PROGRESO: 0 DE 0 CONFIRMADOS</p>
+    <div class="bar-bg" style="height:8px;"><div class="bar-fill" id="checklistProgressBar" style="width:0%;"></div></div>
+  </div>
+
+  <ul class="entries" id="checklistItems" style="margin-top:14px;"></ul>
+  <div class="empty" id="checklistEmpty">No hay pagos para revisar en este periodo.</div>
+
+  <p style="text-align:center;font-family:var(--body);font-size:10.5px;color:var(--gold);font-style:italic;margin-top:16px;">Toca la casilla para confirmar cada pago</p>
+
+</div>
+
+<div id="historialView" style="display:none;">
+
+  <button id="btnBackFromHistorial" type="button" style="width:100%;margin-bottom:16px;font-family:var(--body);font-size:12.5px;font-weight:600;padding:11px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);cursor:pointer;">← Volver al Dashboard</button>
+
+  <div style="margin-bottom:14px;">
+    <p style="font-family:var(--body);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0 0 4px;">Libro de Cuentas</p>
+    <h1 style="font-size:26px;margin:0 0 8px;">Historial de Meses</h1>
+    <p style="font-size:12.5px;color:var(--muted);margin:0;">Nada se borra al cambiar de mes — aquí están todos los meses guardados. Toca uno para verlo en el Dashboard.</p>
+  </div>
+
+  <div id="historialList"></div>
+
+</div>
+
+
+</main>
+
+<div id="updateToast" hidden><span>Hay una versión nueva</span><button id="btnUpdate" type="button">Actualizar</button></div>
+<nav id="bottomNav" aria-label="Navegación principal">
+  <button type="button" data-nav="dashboardView"><span class="ni">⌂</span><span class="nl">Inicio</span></button>
+  <button type="button" data-nav="ingresosView"><span class="ni">↓</span><span class="nl">Ingresos</span></button>
+  <button type="button" id="navQuickAdd" class="nav-fab" aria-label="Añadir gasto"><span class="ni">+</span><span class="nl">Gasto</span></button>
+  <button type="button" data-nav="recurrentesView"><span class="ni">↻</span><span class="nl">Recurrentes</span></button>
+  <button type="button" data-nav="checklistView"><span class="ni">✓</span><span class="nl">Pagos</span><span class="nbadge" id="navBadge" hidden>0</span></button>
+</nav>
+
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="reportTitle">Informe mensual</h2>
+      <button class="modal-close" id="closeReport">✕</button>
+    </div>
+    <div id="reportBody"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="editTitle">Editar</h2>
+      <button class="modal-close" id="closeEdit">✕</button>
+    </div>
+    <form id="formEdit" style="padding:16px;display:flex;flex-direction:column;gap:10px;"></form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="categoryDetailModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="categoryDetailTitle">Categoría</h2>
+      <button class="modal-close" id="closeCategoryDetail">✕</button>
+    </div>
+    <div id="categoryDetailBody"></div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'presupuesto-familiar-data';
+  const SYNC_ID_KEY = 'presupuesto-sync-id';
+  const LAST_SYNC_KEY = 'presupuesto-last-sync';
+  function markSyncSuccess(){
+    try{ localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); }catch(e){}
+    const label = document.getElementById('lastSyncLabel');
+    if(label) label.textContent = new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+  }
+  let data = { incomes: [], expenses: [], subscriptions: [], recurringIncomes: [], budget: null, categoryBudgets: {}, savingGoal: 0 };
+  let saveTimeout = null;
+  let currentMonth = new Date().toISOString().slice(0,7); // "YYYY-MM"
+  let dashboardPeriod = 'weekly'; // 'weekly' | 'monthly'
+  let checklistPeriod = 'monthly'; // 'weekly' | 'monthly'
+  let syncId = null;
+  try{ syncId = localStorage.getItem(SYNC_ID_KEY) || null; }catch(e){ syncId = null; }
+
+  function setSyncStatus(text){
+    const el = document.getElementById('statusMsg');
+    if(el) el.textContent = text;
+  }
+
+  async function pushToRemote(){
+    if(!syncId) return false;
+    try{
+      const res = await fetch('https://jsonblob.com/api/jsonBlob/' + syncId, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json', 'Accept':'application/json'},
+        body: JSON.stringify(data)
+      });
+      if(!res.ok){
+        setSyncStatus(`No se pudo sincronizar (error ${res.status})`);
+        return false;
+      }
+      setSyncStatus('Sincronizado ✓');
+      markSyncSuccess();
+      setTimeout(()=>{ if(document.getElementById('statusMsg').textContent==='Sincronizado ✓') document.getElementById('statusMsg').textContent=''; }, 1500);
+      return true;
+    }catch(e){
+      setSyncStatus('No se pudo sincronizar (sin internet?)');
+      return false;
+    }
+  }
+
+  async function pullFromRemote(applyToData){
+    if(!syncId) return false;
+    try{
+      const res = await fetch('https://jsonblob.com/api/jsonBlob/' + syncId, { headers:{'Accept':'application/json'} });
+      if(res.status === 404) return false;
+      if(!res.ok){
+        setSyncStatus(`No se pudo leer (error ${res.status})`);
+        return false;
+      }
+      const text = await res.text();
+      if(!text) return false;
+      const parsed = JSON.parse(text);
+      if(applyToData){
+        data.incomes = parsed.incomes || [];
+        data.expenses = parsed.expenses || [];
+        data.subscriptions = parsed.subscriptions || [];
+        data.recurringIncomes = parsed.recurringIncomes || [];
+        data.budget = parsed.budget != null ? parsed.budget : null;
+        data.categoryBudgets = parsed.categoryBudgets || {};
+        data.savingGoal = parsed.savingGoal != null ? parsed.savingGoal : 0;
+        saveLocalOnly();
+        render();
+      }
+      markSyncSuccess();
+      return true;
+    }catch(e){
+      setSyncStatus('No se pudo conectar con el servidor de sincronización.');
+      return false;
+    }
+  }
+
+  async function saveLocalOnly(){
+    try{
+      if(hasClaudeStorageSafe()){
+        await window.storage.set(STORAGE_KEY, JSON.stringify(data), false);
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+    }catch(e){}
+  }
+
+  function hasClaudeStorageSafe(){
+    return (typeof window.storage !== 'undefined' && typeof window.storage.get === 'function' && typeof window.storage.set === 'function');
+  }
+
+  function renderSyncUI(){
+    const stamp = document.getElementById('syncStamp');
+    const body = document.getElementById('syncBody');
+    if(!syncId){
+      stamp.textContent = 'SIN CONECTAR';
+      stamp.style.borderColor = 'var(--line)';
+      stamp.style.color = 'var(--muted)';
+      body.innerHTML = `
+        <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px;">Crea un código y compártelo con tu esposa, o conecta el código que ella te dé, para que ambos vean los mismos datos.</p>
+        <button id="btnCreateSync" style="width:100%;margin-bottom:10px;font-family:var(--body);font-size:12px;font-weight:600;padding:10px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">🔗 Crear código para compartir</button>
+        <form id="formConnectSync" style="display:flex;gap:8px;">
+          <input type="text" id="connectSyncInput" placeholder="Pegar código recibido" style="flex:1;font-family:var(--body);font-size:13px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);">
+          <button type="submit" style="font-family:var(--body);font-size:12px;font-weight:600;padding:9px 12px;border:none;border-radius:2px;background:var(--btn2);color:var(--ink);cursor:pointer;">Conectar</button>
+        </form>`;
+      document.getElementById('btnCreateSync').addEventListener('click', createSyncCode);
+      document.getElementById('formConnectSync').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const code = document.getElementById('connectSyncInput').value.trim();
+        if(code) connectSyncCode(code);
+      });
+    } else {
+      stamp.textContent = 'CONECTADO';
+      stamp.style.borderColor = 'var(--gold)';
+      stamp.style.color = 'var(--gold-dk)';
+      let lastSyncText = 'Nunca';
+      try{
+        const t = localStorage.getItem(LAST_SYNC_KEY);
+        if(t) lastSyncText = new Date(Number(t)).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+      }catch(e){}
+      body.innerHTML = `
+        <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px;">Código de sincronización — compártelo una sola vez:</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input type="text" readonly value="${escapeHtml(syncId)}" style="flex:1;font-family:var(--body);font-size:12.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);">
+          <button id="btnCopySync" style="font-family:var(--body);font-size:12px;padding:9px 12px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">Copiar</button>
+        </div>
+        <p style="font-family:var(--body);font-size:10.5px;color:var(--muted);margin:0 0 10px;">Última sincronización exitosa: <span id="lastSyncLabel">${lastSyncText}</span></p>
+        <div style="display:flex;gap:8px;">
+          <button id="btnSyncNow" style="flex:1;font-family:var(--body);font-size:12px;font-weight:600;padding:9px;border:none;border-radius:2px;background:var(--btn2);color:var(--ink);cursor:pointer;">🔄 Sincronizar ahora</button>
+          <button id="btnDisconnectSync" style="font-family:var(--body);font-size:11.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--rust-dk);cursor:pointer;">Desconectar</button>
+        </div>`;
+      document.getElementById('btnCopySync').addEventListener('click', () => {
+        navigator.clipboard.writeText(syncId).then(()=>{
+          document.getElementById('btnCopySync').textContent = '¡Copiado!';
+          setTimeout(()=>{ document.getElementById('btnCopySync').textContent = 'Copiar'; }, 1500);
+        }).catch(()=>{});
+      });
+      document.getElementById('btnSyncNow').addEventListener('click', async () => {
+        setSyncStatus('Sincronizando…');
+        await pullFromRemote(true);
+        await pushToRemote();
+      });
+      document.getElementById('btnDisconnectSync').addEventListener('click', () => {
+        try{ localStorage.removeItem(SYNC_ID_KEY); }catch(e){}
+        syncId = null;
+        renderSyncUI();
+      });
+    }
+  }
+
+  async function createSyncCode(){
+    setSyncStatus('Creando código…');
+    try{
+      const res = await fetch('https://jsonblob.com/api/jsonBlob', {
+        method:'POST',
+        headers:{'Content-Type':'application/json', 'Accept':'application/json'},
+        body: JSON.stringify(data)
+      });
+      if(!res.ok){
+        setSyncStatus(`No se pudo crear el código (error ${res.status}).`);
+        return;
+      }
+      const location = res.headers.get('Location');
+      if(!location){
+        setSyncStatus('El servidor no devolvió un código. Intenta de nuevo.');
+        return;
+      }
+      const id = location.split('/').filter(Boolean).pop();
+      syncId = id;
+      try{ localStorage.setItem(SYNC_ID_KEY, id); }catch(e){}
+      const ok = await pushToRemote();
+      renderSyncUI();
+      if(ok) setSyncStatus('Código creado ✓');
+      setTimeout(()=>{ if(document.getElementById('statusMsg').textContent==='Código creado ✓') document.getElementById('statusMsg').textContent=''; }, 2000);
+    }catch(e){
+      setSyncStatus('No se pudo crear el código. Revisa tu internet.');
+    }
+  }
+
+  async function connectSyncCode(code){
+    setSyncStatus('Conectando…');
+    syncId = code.split('/').filter(Boolean).pop();
+    try{ localStorage.setItem(SYNC_ID_KEY, code); }catch(e){}
+    const found = await pullFromRemote(true);
+    if(!found){
+      // no remote data yet bajo este código — sube lo que tenemos para que ambos arranquen igual
+      await pushToRemote();
+    }
+    renderSyncUI();
+    if(found || syncId) setSyncStatus('Conectado ✓');
+    setTimeout(()=>{ if(document.getElementById('statusMsg').textContent==='Conectado ✓') document.getElementById('statusMsg').textContent=''; }, 2000);
+  }
+
+  const fmt = (n) => '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  function monthLabel(ym){
+    const [y,m] = ym.split('-').map(Number);
+    return monthNames[m-1] + ' ' + y;
+  }
+
+  // Usa window.storage si está disponible (dentro de Claude). Si no, usa localStorage
+  // del navegador, para que también funcione si abres este archivo por tu cuenta.
+  const hasClaudeStorage = (typeof window.storage !== 'undefined'
+    && typeof window.storage.get === 'function'
+    && typeof window.storage.set === 'function');
+
+  async function loadData(){
+    try{
+      if(hasClaudeStorage){
+        const res = await window.storage.get(STORAGE_KEY, false);
+        if(res && res.value){
+          const parsed = JSON.parse(res.value);
+          data.incomes = parsed.incomes || [];
+          data.expenses = parsed.expenses || [];
+          data.subscriptions = parsed.subscriptions || [];
+        data.recurringIncomes = parsed.recurringIncomes || [];
+          data.budget = parsed.budget != null ? parsed.budget : null;
+        data.categoryBudgets = parsed.categoryBudgets || {};
+        }
+      } else {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          data.incomes = parsed.incomes || [];
+          data.expenses = parsed.expenses || [];
+          data.subscriptions = parsed.subscriptions || [];
+        data.recurringIncomes = parsed.recurringIncomes || [];
+          data.budget = parsed.budget != null ? parsed.budget : null;
+        data.categoryBudgets = parsed.categoryBudgets || {};
+        }
+      }
+    }catch(e){
+      // no data guardada todavía
+    }
+    if(normalizeCategories()){ await saveLocalOnly(); }
+    render();
+    renderSyncUI();
+    if(syncId){
+      const found = await pullFromRemote(true);
+      if(!found) await pushToRemote();
+      else if(normalizeCategories()){ render(); await saveLocalOnly(); await pushToRemote(); }
+      setInterval(() => { if(syncId) pullFromRemote(true); }, 20000);
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'visible' && syncId) pullFromRemote(true);
+      });
+    }
+    checkNewMonthBanner();
+  }
+
+  // Unifica mayúsculas/minúsculas y espacios en las categorías ya guardadas,
+  // para que "gasolina" y "Gasolina" cuenten como la misma categoría.
+  function normalizeCategories(){
+    let changed = false;
+    data.expenses.forEach(e => {
+      const t = titleCase(e.category);
+      if(t !== e.category){ e.category = t; changed = true; }
+    });
+    data.subscriptions.forEach(s => {
+      const t = titleCase(s.category);
+      if(t !== s.category){ s.category = t; changed = true; }
+    });
+    const mergedBudgets = {};
+    Object.keys(data.categoryBudgets || {}).forEach(k => {
+      const t = titleCase(k);
+      if(mergedBudgets[t] == null) mergedBudgets[t] = data.categoryBudgets[k];
+      if(t !== k) changed = true;
+    });
+    if(Object.keys(data.categoryBudgets || {}).length !== Object.keys(mergedBudgets).length) changed = true;
+    data.categoryBudgets = mergedBudgets;
+    return changed;
+  }
+
+  function scheduleSave(){
+    const statusEl = document.getElementById('statusMsg');
+    statusEl.textContent = 'Guardando…';
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      try{
+        if(hasClaudeStorage){
+          await window.storage.set(STORAGE_KEY, JSON.stringify(data), false);
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        statusEl.textContent = 'Guardado ✓';
+        setTimeout(()=>{ if(statusEl.textContent==='Guardado ✓') statusEl.textContent=''; }, 1500);
+        if(syncId) await pushToRemote();
+      }catch(e){
+        statusEl.textContent = 'No se pudo guardar. Intenta de nuevo.';
+      }
+    }, 300);
+  }
+
+  const dayNames = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+  function dateLabel(dateStr){
+    if(!dateStr) return '';
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const weekday = dayNames[new Date(y,m-1,d).getDay()];
+    return ` · ${weekday}, ${d} de ${monthNames[m-1]}`;
+  }
+
+  function defaultDateForMonth(ym){
+    const today = new Date();
+    const todayYm = today.toISOString().slice(0,7);
+    if(ym === todayYm) return today.toISOString().slice(0,10);
+    return ym + '-01';
+  }
+
+  function titleCase(str){
+    return (str || '').trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  }
+  function normCat(str){
+    return (str || '').trim().toLowerCase();
+  }
+  // "Gasolina Kia" / "Gasolina Mazda" / "Gasolina Otro" -> categoría base "Gasolina" + filtro por vehículo
+  function parseCatBudgetName(catName){
+    const m = catName.match(/^Gasolina\s+(Kia|Mazda|Otro)$/i);
+    if(m) return { baseCategory: 'Gasolina', vehicle: m[1] };
+    return { baseCategory: catName, vehicle: null };
+  }
+  // Solo categorías de gasto variable del día a día respetan el toggle Semanal/Mensual.
+  function isWeeklyEligible(catName){
+    const n = normCat(catName);
+    return n.includes('gasolina') || n.includes('comida');
+  }
+
+  const categoryColors = {
+    'Vivienda':'#8EA0FF','Compra De Comida Fastfoods':'#FF7B93','Transporte':'#6FA3C7','Servicios':'#8FBF8A',
+    'Deudas':'#FF7B93','Ahorros':'#3FB88A','Entretenimiento':'#E0935C','Educación':'#8AA6E0',
+    'Compras De Comida Supermercado':'#A9C86B','Compra De Comida Restaurante':'#E08A5C',
+    'Compra De Comida Misc':'#F0B84A','Utilidades':'#5FBFB3','Deudas De Utilidades':'#C7724A',
+    'Deporte':'#5CA8E0','Baile':'#C77DD1','Otro':'#8F98B8'
+  };
+
+  function capitalize(str){
+    if(!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function annualTotal(item){
+    const freq = item.frequency || 'monthly';
+    const occurrencesPerYear = freq === 'weekly' ? 52 : freq === 'biweekly' ? 26 : freq === 'yearly' ? 1 : 12;
+    return Number(item.amount) * occurrencesPerYear;
+  }
+
+  function daysInMonthOf(ym){
+    const [y,m] = ym.split('-').map(Number);
+    return new Date(y, m, 0).getDate();
+  }
+
+  function getOccurrenceDays(ym, frequency, payDay, payMonth){
+    const [y,m] = ym.split('-').map(Number);
+    const daysInMonth = daysInMonthOf(ym);
+    if(frequency === 'yearly'){
+      const targetMonth = (payMonth != null && payMonth !== '') ? Number(payMonth) : 1;
+      if(targetMonth !== m) return [];
+      const day = (payDay != null && payDay !== '') ? Math.min(Number(payDay), daysInMonth) : 1;
+      return [day];
+    }
+    if(frequency === 'monthly'){
+      const day = (payDay != null && payDay !== '') ? Math.min(Number(payDay), daysInMonth) : 1;
+      return [day];
+    }
+    const weekday = (payDay != null && payDay !== '') ? Number(payDay) : 5;
+    const matches = [];
+    for(let d=1; d<=daysInMonth; d++){
+      if(new Date(y, m-1, d).getDay() === weekday) matches.push(d);
+    }
+    if(frequency === 'weekly') return matches;
+    return matches.filter((_, idx) => idx % 2 === 0); // bisemanal: cada otra ocurrencia
+  }
+
+  // Calcula cuánto de un ingreso/gasto recurrente ya "sucedió" según el calendario real,
+  // para no sumarlo/restarlo antes de que llegue su día de pago.
+  // Revisa si un recurrente aplicaba en un mes dado. Con esto puedes cerrar
+  // una deuda vieja (activeUntil) y abrir la nueva consolidada (activeFrom)
+  // sin que los meses de antes cambien de número.
+  function isActiveInMonth(item, ym){
+    if(item.activeFrom && ym < item.activeFrom) return false;
+    if(item.activeUntil && ym > item.activeUntil) return false;
+    return true;
+  }
+  const ZERO_INFO = { occurred: 0, total: 0, amount: 0, fullAmount: 0 };
+
+  function accruedInfo(item, ym){
+    if(!isActiveInMonth(item, ym)) return { ...ZERO_INFO };
+    const days = getOccurrenceDays(ym, item.frequency || 'monthly', item.payDay, item.payMonth);
+    const todayYm = new Date().toISOString().slice(0,7);
+    let occurred;
+    if(ym < todayYm) occurred = days.length;
+    else if(ym > todayYm) occurred = 0;
+    else {
+      const todayDay = new Date().getDate();
+      occurred = days.filter(d => d <= todayDay).length;
+    }
+    return { occurred, total: days.length, amount: Number(item.amount) * occurred, fullAmount: Number(item.amount) * days.length };
+  }
+
+  function weekBucketOf(day){
+    if(day<=7) return 1;
+    if(day<=14) return 2;
+    if(day<=21) return 3;
+    if(day<=28) return 4;
+    return 5;
+  }
+
+  // A diferencia de accruedInfo (que asume el pago con solo pasar la fecha),
+  // confirmedInfo solo cuenta un pago como "hecho" si lo confirmaste a mano en el Checklist de Pagos.
+  // Así el dinero no se descuenta del balance hasta que de verdad lo verificaste.
+  // Solo los pagos MENSUALES necesitan que tú confirmes manualmente en el Checklist.
+  // Los semanales/bisemanales son demasiados para confirmar uno por uno, así que
+  // se calculan automático por fecha (como antes) para que nunca se queden atascados.
+  function confirmedInfo(item, ym){
+    if(!isActiveInMonth(item, ym)) return { ...ZERO_INFO };
+    const freq = item.frequency || 'monthly';
+    if(freq !== 'monthly' && freq !== 'yearly'){
+      return accruedInfo(item, ym);
+    }
+    const days = getOccurrenceDays(ym, freq, item.payDay, item.payMonth);
+    const confirmations = item.confirmations || {};
+    const occurred = (days.length > 0 && confirmations[ym]) ? 1 : 0;
+    return { occurred, total: days.length, amount: Number(item.amount) * occurred, fullAmount: Number(item.amount) * days.length };
+  }
+
+  // Para ingresos recurrentes: por defecto son automáticos (sueldo fijo, se asume por fecha).
+  // Si el ingreso se marca "requiresConfirmation" (ej. renta, no 100% garantizada),
+  // se comporta como los pagos del Checklist — solo cuenta cuando tú confirmas que sí llegó.
+  function incomeInfo(item, ym){
+    if(item.requiresConfirmation) return confirmedInfo(item, ym);
+    return accruedInfo(item, ym);
+  }
+
+  // Resumen de un mes cualquiera (pasado, presente o futuro) — usado por el Historial.
+  // No borra ni modifica nada: solo lee los mismos arreglos de siempre, filtrados por mes.
+  function monthSummary(ym){
+    const oneTimeIn = data.incomes.filter(i => i.month === ym).reduce((s,i) => s + Number(i.amount), 0);
+    const oneTimeOut = data.expenses.filter(e => e.month === ym).reduce((s,e) => s + Number(e.amount), 0);
+    const recIn = data.recurringIncomes.reduce((s,i) => s + incomeInfo(i, ym).amount, 0);
+    const subOut = data.subscriptions.reduce((s,i) => s + confirmedInfo(i, ym).amount, 0);
+    const totalIn = oneTimeIn + recIn;
+    const totalOut = oneTimeOut + subOut;
+    return { oneTimeIn, oneTimeOut, recIn, subOut, totalIn, totalOut, balance: totalIn - totalOut,
+      countOneTimeIn: data.incomes.filter(i => i.month === ym).length,
+      countOneTimeOut: data.expenses.filter(e => e.month === ym).length };
+  }
+
+  // Todos los meses donde hay al menos un movimiento suelto guardado (ingreso o gasto),
+  // más el mes actual real, para que el Historial siempre tenga algo que mostrar.
+  function getAllMonthsWithData(){
+    const set = new Set();
+    data.incomes.forEach(i => { if(i.month) set.add(i.month); });
+    data.expenses.forEach(e => { if(e.month) set.add(e.month); });
+    set.add(new Date().toISOString().slice(0,7));
+    return Array.from(set).sort().reverse();
+  }
+
+  function renderHistorial(){
+    const wrap = document.getElementById('historialList');
+    const months = getAllMonthsWithData();
+    wrap.innerHTML = '';
+    months.forEach(ym => {
+      const s = monthSummary(ym);
+      const balColor = s.balance >= 0 ? 'var(--gold-dk)' : 'var(--rust-dk)';
+      const row = document.createElement('div');
+      row.className = 'card';
+      row.style.marginBottom = '12px';
+      row.style.cursor = 'pointer';
+      row.innerHTML = `
+        <div class="card-head" style="border-bottom:none;padding-bottom:4px;">
+          <h2 style="font-size:17px;text-transform:capitalize;">${monthLabel(ym)}</h2>
+          <span class="subtotal" style="color:${balColor};">${fmt(s.balance)}</span>
+        </div>
+        <div style="padding:0 16px 14px;font-family:var(--body);font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;">
+          <span>Ingresos: <span style="color:var(--gold-dk);">${fmt(s.totalIn)}</span></span>
+          <span>Gastos: <span style="color:var(--rust-dk);">${fmt(s.totalOut)}</span></span>
+        </div>
+        <div style="padding:0 16px 14px;font-family:var(--body);font-size:10px;color:var(--muted);">
+          ${s.countOneTimeIn} ingreso(s) suelto(s) · ${s.countOneTimeOut} gasto(s) suelto(s) guardados en este mes
+        </div>`;
+      row.addEventListener('click', () => {
+        currentMonth = ym;
+        document.getElementById('historialView').style.display = 'none';
+        document.getElementById('dashboardView').style.display = 'block';
+        render();
+        window.scrollTo(0,0);
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  function statusBadge(info){
+    if(info.total === 0){
+      return ` · <span style="color:var(--muted);">No aplica este mes</span>`;
+    }
+    if(info.total <= 1){
+      return info.occurred >= 1
+        ? ` · <span style="color:var(--gold-dk);">Cobrado</span>`
+        : ` · <span style="color:var(--rust-dk);">Pendiente</span>`;
+    }
+    return ` · <span style="color:${info.occurred>=info.total?'var(--gold-dk)':'var(--rust-dk)'};">${info.occurred}/${info.total} este mes</span>`;
+  }
+
+  function payDayLabel(item){
+    if(item.payDay == null || item.payDay === '') return '';
+    const freq = item.frequency || 'monthly';
+    const monthNamesShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    if(freq === 'yearly'){
+      const mIdx = item.payMonth ? Number(item.payMonth) - 1 : 0;
+      return ` · ${item.payDay} ${monthNamesShort[mIdx] || ''}`;
+    }
+    if(freq === 'monthly'){
+      return ` · Día ${item.payDay}`;
+    }
+    return ` · ${capitalize(dayNames[Number(item.payDay)] || '')}`;
+  }
+
+  function activeWindowLabel(item){
+    if(!item.activeFrom && !item.activeUntil) return '';
+    const monthNamesShort = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const fmtYm = (ym) => { const [y,m] = ym.split('-').map(Number); return `${monthNamesShort[m-1]} ${y}`; };
+    if(item.activeFrom && item.activeUntil) return ` · ${fmtYm(item.activeFrom)}–${fmtYm(item.activeUntil)}`;
+    if(item.activeFrom) return ` · desde ${fmtYm(item.activeFrom)}`;
+    return ` · hasta ${fmtYm(item.activeUntil)}`;
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function render(){
+    document.getElementById('monthLabel').textContent = monthLabel(currentMonth);
+    document.querySelectorAll('.date-input').forEach(inp => {
+      if(document.activeElement !== inp) inp.value = defaultDateForMonth(currentMonth);
+    });
+
+    const listIn = document.getElementById('listIngresos');
+    const listInRec = document.getElementById('listIngresosRecurrentes');
+    const listOut = document.getElementById('listGastos');
+    const listSub = document.getElementById('listSuscripciones');
+    listIn.innerHTML = ''; listInRec.innerHTML = ''; listOut.innerHTML = ''; listSub.innerHTML = '';
+
+    const incomesThisMonth = data.incomes.filter(i => i.month === currentMonth);
+    const expensesThisMonth = data.expenses.filter(e => e.month === currentMonth);
+
+    let totalIn = 0, totalInRec = 0, totalOut = 0, totalSub = 0;
+
+    incomesThisMonth.forEach(item => {
+      totalIn += Number(item.amount);
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.person)}${dateLabel(item.date)}</span></div>
+        <div class="entry-right">
+          <div class="entry-amount in">${fmt(item.amount)}</div>
+          <button class="del-btn" data-edit-type="income" data-id="${item.id}" title="Editar">✎</button>
+          <button class="del-btn" data-type="income" data-id="${item.id}" title="Eliminar">✕</button>
+        </div>`;
+      listIn.appendChild(li);
+    });
+
+    let totalInRecFull = 0;
+    data.recurringIncomes.forEach(item => {
+      const freq = item.frequency || 'monthly';
+      const info = incomeInfo(item, currentMonth);
+      totalInRec += info.amount;
+      totalInRecFull += info.fullAmount;
+      const freqLabel = capitalize(freq === 'weekly' ? 'semanal' : freq === 'biweekly' ? 'bisemanal' : freq === 'yearly' ? 'anual' : 'mensual');
+      const suffix = freq === 'weekly' ? '/sem' : freq === 'biweekly' ? '/2sem' : '';
+      const statusHtml = statusBadge(info);
+      const li = document.createElement('li');
+      li.style.flexDirection = 'column';
+      li.style.alignItems = 'stretch';
+      li.style.gap = '4px';
+      li.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.person)} · ${freqLabel}${payDayLabel(item)}${activeWindowLabel(item)}${statusHtml}</span></div>
+          <div class="entry-right">
+            <div class="entry-amount in">${fmt(item.amount)}${suffix}</div>
+            <button class="del-btn" data-edit-type="recurringIncome" data-id="${item.id}" title="Editar">✎</button>
+            <button class="del-btn" data-type="recurringIncome" data-id="${item.id}" title="Eliminar">✕</button>
+          </div>
+        </div>
+        <div style="font-family:var(--body);font-size:11px;color:var(--muted);padding-left:2px;">
+          ${freq !== 'monthly' ? `Equivale a ${fmt(annualTotal(item)/12)}/mes · ` : ''}Total al año: ${fmt(annualTotal(item))}
+        </div>
+      `;
+      listInRec.appendChild(li);
+    });
+    document.getElementById('progresoIngresosRecurrentes').textContent =
+      data.recurringIncomes.length ? `${fmt(totalInRec)} de ${fmt(totalInRecFull)} proyectado` : '';
+    const totalAnualIngresosRecurrentes = data.recurringIncomes.reduce((sum, i) => sum + annualTotal(i), 0);
+    document.getElementById('totalAnualIngresosRecurrentes').textContent =
+      data.recurringIncomes.length ? `Total al año (todos): ${fmt(totalAnualIngresosRecurrentes)}` : '';
+
+    expensesThisMonth.forEach(item => {
+      totalOut += Number(item.amount);
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.category)}${item.vehicle ? ` · ${escapeHtml(item.vehicle)}` : ''}${dateLabel(item.date)}</span></div>
+        <div class="entry-right">
+          <div class="entry-amount out">${fmt(item.amount)}</div>
+          <button class="del-btn" data-edit-type="expense" data-id="${item.id}" title="Editar">✎</button>
+          <button class="del-btn" data-type="expense" data-id="${item.id}" title="Eliminar">✕</button>
+        </div>`;
+      listOut.appendChild(li);
+    });
+
+    const subsByCategory = {};
+    let totalSubFull = 0;
+    data.subscriptions.forEach(item => {
+      const info = confirmedInfo(item, currentMonth);
+      totalSub += info.amount;
+      totalSubFull += info.fullAmount;
+      if(!subsByCategory[item.category]) subsByCategory[item.category] = [];
+      subsByCategory[item.category].push(item);
+    });
+    document.getElementById('progresoSuscripciones').textContent =
+      data.subscriptions.length ? `${fmt(totalSub)} de ${fmt(totalSubFull)} proyectado` : '';
+    Object.keys(subsByCategory).sort().forEach(cat => {
+      const color = categoryColors[cat] || 'var(--muted)';
+      const catMonthlyTotal = subsByCategory[cat].reduce((sum, i) => sum + annualTotal(i)/12, 0);
+      const catAnnualTotal = subsByCategory[cat].reduce((sum, i) => sum + annualTotal(i), 0);
+      const groupHeader = document.createElement('li');
+      groupHeader.style.cssText = 'padding:8px 16px 4px;border-bottom:none;display:flex;justify-content:space-between;align-items:center;';
+      groupHeader.innerHTML = `
+        <span style="font-family:var(--body);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:${color};display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;"></span>${escapeHtml(cat)}</span>
+        <span style="font-family:var(--body);font-size:11px;color:${color};text-align:right;">${fmt(catMonthlyTotal)}/mes<br>${fmt(catAnnualTotal)}/año</span>
+      `;
+      listSub.appendChild(groupHeader);
+      subsByCategory[cat].forEach(item => {
+        const freq = item.frequency || 'monthly';
+        const freqLabel = capitalize(freq === 'weekly' ? 'semanal' : freq === 'biweekly' ? 'bisemanal' : freq === 'yearly' ? 'anual' : 'mensual');
+        const suffix = freq === 'weekly' ? '/sem' : freq === 'biweekly' ? '/2sem' : '';
+        const info = confirmedInfo(item, currentMonth);
+        const statusHtml = statusBadge(info);
+        const li = document.createElement('li');
+        li.style.borderLeft = `3px solid ${color}`;
+        li.style.paddingLeft = '13px';
+        li.style.flexDirection = 'column';
+        li.style.alignItems = 'stretch';
+        li.style.gap = '4px';
+        li.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${freqLabel}${payDayLabel(item)}${activeWindowLabel(item)}${statusHtml}</span></div>
+            <div class="entry-right">
+              <div class="entry-amount out">${fmt(item.amount)}${suffix}</div>
+              <button class="del-btn" data-edit-type="subscription" data-id="${item.id}" title="Editar">✎</button>
+              <button class="del-btn" data-type="subscription" data-id="${item.id}" title="Eliminar">✕</button>
+            </div>
+          </div>
+          <div style="font-family:var(--body);font-size:11px;color:var(--muted);padding-left:2px;">
+            ${freq !== 'monthly' ? `Equivale a ${fmt(annualTotal(item)/12)}/mes · ` : ''}Total al año: ${fmt(annualTotal(item))}
+          </div>
+        `;
+        listSub.appendChild(li);
+      });
+    });
+
+    const totalAnualSuscripciones = data.subscriptions.reduce((sum, s) => sum + annualTotal(s), 0);
+    document.getElementById('totalAnualSuscripciones').textContent =
+      data.subscriptions.length ? `Total al año (todas): ${fmt(totalAnualSuscripciones)}` : '';
+
+    document.getElementById('emptyIngresos').style.display = incomesThisMonth.length ? 'none' : 'block';
+    document.getElementById('emptyIngresosRecurrentes').style.display = data.recurringIncomes.length ? 'none' : 'block';
+    document.getElementById('emptyGastos').style.display = expensesThisMonth.length ? 'none' : 'block';
+    document.getElementById('emptySuscripciones').style.display = data.subscriptions.length ? 'none' : 'block';
+
+    document.getElementById('totalIngresos').textContent = fmt(totalIn);
+    document.getElementById('totalIngresosRecurrentes').textContent = fmt(totalInRec);
+    document.getElementById('totalGastos').textContent = fmt(totalOut);
+    document.getElementById('totalSuscripciones').textContent = fmt(totalSub);
+
+    const balance = (totalIn + totalInRec) - (totalOut + totalSub);
+    document.getElementById('balanceAmount').textContent = fmt(balance);
+    const stamp = document.getElementById('balanceStamp');
+    if(balance < 0){
+      stamp.textContent = 'DÉFICIT';
+      stamp.classList.add('deficit');
+    } else {
+      stamp.textContent = 'SUPERÁVIT';
+      stamp.classList.remove('deficit');
+    }
+
+    // ---- Presupuesto + mayor gasto ----
+    const combinedForMax = [
+      ...expensesThisMonth.map(e => ({ name:e.name, category:e.category, amount:Number(e.amount) })),
+      ...data.subscriptions.filter(s => confirmedInfo(s, currentMonth).occurred > 0).map(s => ({ name:s.name, category:s.category, amount:Number(s.amount) }))
+    ];
+    const totalGastosCombined = totalOut + totalSub;
+    const highestLine = document.getElementById('highestExpenseLine');
+    if(combinedForMax.length === 0){
+      highestLine.textContent = 'Aún no hay gastos registrados este mes.';
+    } else {
+      const highest = combinedForMax.reduce((a,b) => b.amount > a.amount ? b : a);
+      const pctOfTotal = totalGastosCombined ? Math.round((highest.amount/totalGastosCombined)*100) : 0;
+      highestLine.textContent = `Mayor gasto: ${highest.name} (${highest.category}) — ${fmt(highest.amount)}, ${pctOfTotal}% del total.`;
+    }
+
+    // ---- Ritmo de gasto (solo para el mes real en curso) ----
+    const paceLine = document.getElementById('paceLine');
+    const realTodayYm = new Date().toISOString().slice(0,7);
+
+    // ---- Cuántas confirmaciones del Checklist faltan a la fecha de hoy ----
+    {
+      const inlineBadge = document.getElementById('checklistPendingInline');
+      const inlineCount = document.getElementById('checklistPendingCountInline');
+      if(currentMonth === realTodayYm){
+        const todayDayNum = new Date().getDate();
+        let pendingCount = 0;
+        data.subscriptions.forEach(sub => {
+          const freq = sub.frequency || 'monthly';
+          if(freq !== 'monthly' && freq !== 'yearly') return; // semanales/bisemanales ya no requieren confirmación
+          if(!isActiveInMonth(sub, currentMonth)) return; // fuera de su ventana activo desde/hasta
+          const days = getOccurrenceDays(currentMonth, freq, sub.payDay, sub.payMonth);
+          if(days.length === 0) return; // anual que no le toca este mes
+          const confirmations = sub.confirmations || {};
+          const due = days[0] <= todayDayNum;
+          if(due && !confirmations[currentMonth]) pendingCount += 1;
+        });
+        if(pendingCount > 0){
+          if(inlineBadge){ inlineBadge.style.display = 'inline'; inlineCount.textContent = pendingCount; }
+        } else {
+          if(inlineBadge) inlineBadge.style.display = 'none';
+        }
+      } else {
+        if(inlineBadge) inlineBadge.style.display = 'none';
+      }
+    }
+
+    if(currentMonth === realTodayYm){
+      const today = new Date();
+      const dayOfMonth = today.getDate();
+      const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+      const dailyAvg = totalGastosCombined / dayOfMonth;
+      const projected = dailyAvg * daysInMonth;
+      let projLine = `Ritmo: ${fmt(dailyAvg)}/día · proyectado ${fmt(projected)} para fin de mes`;
+      if(data.budget && projected > data.budget){
+        projLine += ` — a este ritmo te pasarías del presupuesto por ${fmt(projected - data.budget)}.`;
+      }
+      paceLine.textContent = projLine;
+    } else {
+      paceLine.textContent = '';
+    }
+
+    // ---- Esta Semana ----
+    const weeklyBody = document.getElementById('weeklyBody');
+    const weeklyStamp = document.getElementById('weeklyStamp');
+    let weekSpentGlobal = 0, weeklyBudgetGlobal = null, weekLabelGlobal = '';
+    if(currentMonth !== realTodayYm){
+      weeklyBody.innerHTML = `<p style="font-size:12.5px;color:var(--muted);font-style:italic;margin:0;">Solo disponible viendo el mes en curso.</p>`;
+      weeklyStamp.textContent = '—';
+      weeklyStamp.style.borderColor = 'var(--line)';
+      weeklyStamp.style.color = 'var(--muted)';
+    } else {
+      const todayDay = new Date().getDate();
+      let wkStart, wkEnd, wkLabel;
+      if(todayDay<=7){ wkStart=1; wkEnd=7; wkLabel='Semana 1 (1-7)'; }
+      else if(todayDay<=14){ wkStart=8; wkEnd=14; wkLabel='Semana 2 (8-14)'; }
+      else if(todayDay<=21){ wkStart=15; wkEnd=21; wkLabel='Semana 3 (15-21)'; }
+      else if(todayDay<=28){ wkStart=22; wkEnd=28; wkLabel='Semana 4 (22-28)'; }
+      else { wkStart=29; wkEnd=31; wkLabel='Semana 5 (29-31)'; }
+
+      const weekExpenses = expensesThisMonth.filter(e => {
+        if(!e.date) return false;
+        const d = Number(e.date.split('-')[2]);
+        return d >= wkStart && d <= wkEnd;
+      });
+      const weekSpent = weekExpenses.reduce((s,e)=>s+Number(e.amount),0);
+      const weeklyBudget = data.budget ? data.budget/4.33 : null;
+      const weekOver = weeklyBudget != null && weekSpent > weeklyBudget;
+      const weekHighest = weekExpenses.length ? weekExpenses.reduce((a,b)=> Number(b.amount)>Number(a.amount)?b:a) : null;
+      weekSpentGlobal = weekSpent; weeklyBudgetGlobal = weeklyBudget; weekLabelGlobal = wkLabel;
+
+      let html = `<div class="report-row-top" style="margin-bottom:6px;"><span>${wkLabel}</span><span>${fmt(weekSpent)}${weeklyBudget!=null?` / ${fmt(weeklyBudget)}`:''}</span></div>`;
+      if(weeklyBudget != null){
+        const pct = Math.min(Math.round((weekSpent/weeklyBudget)*100), 100);
+        html += `<div class="bar-bg" style="height:8px;"><div class="bar-fill" style="width:${pct}%;background:${weekOver?'var(--rust-dk)':'var(--gold-dk)'};"></div></div>`;
+      } else {
+        html += `<p style="font-size:11.5px;color:var(--muted);margin:2px 0 0;">Pon un presupuesto mensual para ver tu meta semanal aproximada.</p>`;
+      }
+      if(weekHighest){
+        html += `<p style="font-size:11.5px;color:var(--muted);margin-top:8px;font-style:italic;">Mayor gasto esta semana: ${escapeHtml(weekHighest.name)} — ${fmt(weekHighest.amount)}</p>`;
+      }
+      weeklyBody.innerHTML = html;
+
+      if(weeklyBudget == null){
+        weeklyStamp.textContent = 'SIN META';
+        weeklyStamp.style.borderColor = 'var(--line)';
+        weeklyStamp.style.color = 'var(--muted)';
+      } else if(weekOver){
+        weeklyStamp.textContent = 'SOBRE LA META';
+        weeklyStamp.style.borderColor = 'var(--rust-dk)';
+        weeklyStamp.style.color = 'var(--rust-dk)';
+      } else {
+        weeklyStamp.textContent = 'DENTRO';
+        weeklyStamp.style.borderColor = 'var(--gold)';
+        weeklyStamp.style.color = 'var(--gold-dk)';
+      }
+    }
+
+    // ---- Hero Total (Semanal/Mensual toggle) ----
+    const heroLabel = document.getElementById('heroLabel');
+    const heroAmount = document.getElementById('heroAmount');
+    const heroBar = document.getElementById('heroBar');
+    if(dashboardPeriod === 'weekly'){
+      heroLabel.textContent = 'Presupuesto Total vs Gastado (Semana)';
+      if(currentMonth !== realTodayYm || weeklyBudgetGlobal == null){
+        heroAmount.textContent = fmt(weekSpentGlobal) + ' / —';
+        heroBar.style.width = '0%';
+      } else {
+        heroAmount.textContent = fmt(weekSpentGlobal) + ' / ' + fmt(weeklyBudgetGlobal);
+        const pct = Math.min(Math.round((weekSpentGlobal/weeklyBudgetGlobal)*100), 100);
+        heroBar.style.width = pct + '%';
+        heroBar.style.background = weekSpentGlobal > weeklyBudgetGlobal ? 'var(--rust-dk)' : 'var(--gold-dk)';
+      }
+    } else {
+      heroLabel.textContent = 'Presupuesto Total vs Gastado (Mes)';
+      if(data.budget == null){
+        heroAmount.textContent = fmt(totalGastosCombined) + ' / —';
+        heroBar.style.width = '0%';
+      } else {
+        heroAmount.textContent = fmt(totalGastosCombined) + ' / ' + fmt(data.budget);
+        const pct = Math.min(Math.round((totalGastosCombined/data.budget)*100), 100);
+        heroBar.style.width = pct + '%';
+        heroBar.style.background = totalGastosCombined > data.budget ? 'var(--rust-dk)' : 'var(--gold-dk)';
+      }
+    }
+
+    // ---- Ritmo: ¿cuánto del presupuesto llevas vs cuánto del periodo ha pasado? ----
+    {
+      const tick = document.getElementById('heroPaceTick'), note = document.getElementById('heroPaceNote');
+      let spent = null, budget = null, frac = null, unit = '';
+      const now = new Date();
+      if(currentMonth === realTodayYm){
+        if(dashboardPeriod === 'weekly'){
+          const iso = now.getDay() === 0 ? 7 : now.getDay();
+          spent = weekSpentGlobal; budget = weeklyBudgetGlobal; frac = iso/7; unit = 'de la semana';
+        } else {
+          spent = totalGastosCombined; budget = data.budget; frac = now.getDate()/daysInMonthOf(currentMonth); unit = 'del mes';
+        }
+      }
+      if(budget && budget > 0 && frac != null){
+        const sp = Math.round(spent/budget*100), fp = Math.round(frac*100);
+        tick.style.display = 'block'; tick.style.left = Math.min(fp,100) + '%';
+        const hot = sp > fp + 5;
+        note.className = hot ? 'hot' : '';
+        note.innerHTML = `Llevas <b>${sp}%</b> del presupuesto y va el <b>${fp}%</b> ${unit} · ` + (hot ? 'ritmo alto' : 'vas al día');
+      } else {
+        tick.style.display = 'none'; note.textContent = ''; note.className = '';
+      }
+    }
+    document.getElementById('heroEstSemana').textContent = 'Estimado semana: ' + (weeklyBudgetGlobal != null ? fmt(weeklyBudgetGlobal) : (data.budget ? fmt(data.budget/4.33) : '—'));
+    document.getElementById('heroEstMes').textContent = 'Estimado mes: ' + (data.budget != null ? fmt(data.budget) : '—');
+
+    // ---- Esta Semana (tarjeta compacta, Lunes-Domingo real) ----
+    {
+      const DAY_NAMES_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+      const todayReal = new Date();
+      const jsDay = todayReal.getDay(); // 0=Domingo...6=Sábado
+      const isoDay = jsDay === 0 ? 7 : jsDay; // 1=Lunes...7=Domingo
+      const daysRemaining = 7 - isoDay;
+      const monday = new Date(todayReal); monday.setDate(todayReal.getDate() - (isoDay - 1));
+      const sunday = new Date(todayReal); sunday.setDate(todayReal.getDate() + (7 - isoDay));
+      const shortFmt = (d) => `${d.getDate()} ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()]}`;
+
+      const rangeEl = document.getElementById('weekRangeLabel');
+      const todayEl = document.getElementById('todayWeekLabel');
+      const subEl = document.getElementById('weekSubLabel');
+      const moneyEl = document.getElementById('weekMoneyLabel');
+      const spentEl = document.getElementById('weekSpentLabelCompact');
+      const limitEl = document.getElementById('dailyLimitLabel');
+
+      if(rangeEl) rangeEl.textContent = shortFmt(monday) + ' → ' + shortFmt(sunday);
+      if(todayEl) todayEl.textContent = DAY_NAMES_FULL[jsDay];
+      if(subEl) subEl.textContent = `día ${isoDay} de 7 · quedan ${daysRemaining} días`;
+
+      const available = weeklyBudgetGlobal != null ? Math.max(weeklyBudgetGlobal - weekSpentGlobal, 0) : 0;
+      const dailyLimit = daysRemaining > 0 ? available / daysRemaining : available;
+      if(moneyEl) moneyEl.textContent = weeklyBudgetGlobal != null ? fmt(available) : '—';
+      if(spentEl) spentEl.textContent = fmt(weekSpentGlobal);
+      if(limitEl) limitEl.textContent = weeklyBudgetGlobal != null ? fmt(dailyLimit) : '—';
+    }
+
+    document.getElementById('budgetSpentLabel').textContent = 'Gastado: ' + fmt(totalGastosCombined);
+    const budgetBar = document.getElementById('budgetBar');
+    const budgetStamp = document.getElementById('budgetStamp');
+    const budgetGoalLabel = document.getElementById('budgetGoalLabel');
+    const budgetInput = document.getElementById('budgetInput');
+    if(document.activeElement !== budgetInput){
+      budgetInput.value = data.budget != null ? data.budget : '';
+    }
+    if(data.budget == null || data.budget === 0){
+      budgetGoalLabel.textContent = 'Meta: sin definir';
+      budgetBar.style.width = '0%';
+      budgetBar.style.background = 'var(--line)';
+      budgetStamp.textContent = 'SIN META';
+      budgetStamp.classList.remove('deficit');
+      budgetStamp.style.borderColor = 'var(--line)';
+      budgetStamp.style.color = 'var(--muted)';
+    } else {
+      const pct = Math.min(Math.round((totalGastosCombined/data.budget)*100), 999);
+      budgetGoalLabel.textContent = 'Meta: ' + fmt(data.budget);
+      budgetBar.style.width = Math.min(pct,100) + '%';
+      if(totalGastosCombined > data.budget){
+        budgetBar.style.background = 'var(--rust-dk)';
+        budgetStamp.textContent = 'SOBREGIRADO';
+        budgetStamp.style.borderColor = 'var(--rust-dk)';
+        budgetStamp.style.color = 'var(--rust-dk)';
+      } else {
+        budgetBar.style.background = 'var(--gold-dk)';
+        budgetStamp.textContent = pct + '% USADO';
+        budgetStamp.style.borderColor = 'var(--gold)';
+        budgetStamp.style.color = 'var(--gold-dk)';
+      }
+    }
+
+    // ---- Meta de ahorro ----
+    const savingGoalInput = document.getElementById('savingGoalInput');
+    const savingSpent = expensesThisMonth.filter(e => normCat(e.category) === normCat('Ahorros')).reduce((s,e)=>s+Number(e.amount),0);
+    const savingGoal = Number(data.savingGoal || 0);
+    document.getElementById('savingSpentLabel').textContent = 'Ahorrado: ' + fmt(savingSpent);
+    document.getElementById('savingGoalLabel').textContent = savingGoal > 0 ? 'Meta: ' + fmt(savingGoal) : 'Meta: sin definir';
+    document.getElementById('savingGoalStatus').textContent = savingGoal > 0 ? fmt(savingSpent - savingGoal) : fmt(savingSpent);
+    const savingBar = document.getElementById('savingBar');
+    savingBar.style.width = savingGoal > 0 ? Math.min((savingSpent/savingGoal)*100,100) + '%' : '0%';
+    document.getElementById('savingAdvice').textContent = savingGoal <= 0 ? 'Define una meta para que la app te diga cuánto falta y te ayude a mantenerla.' : savingSpent >= savingGoal ? 'Meta alcanzada. Considera mover el excedente a tu fondo de emergencia o inversión.' : 'Te faltan ' + fmt(savingGoal-savingSpent) + ' para alcanzar la meta.';
+    if(document.activeElement !== savingGoalInput) savingGoalInput.value = savingGoal > 0 ? savingGoal : '';
+
+    // ---- Presupuesto por categoría ----
+    const listCatBudgets = document.getElementById('listCategoryBudgets');
+    listCatBudgets.innerHTML = '';
+    const catBudgetKeys = Object.keys(data.categoryBudgets);
+    document.getElementById('emptyCategoryBudgets').style.display = catBudgetKeys.length ? 'none' : 'block';
+    const catPeriodLabel = document.getElementById('categoryBudgetPeriodLabel');
+    // (etiqueta de periodo ahora es estática, ver HTML)
+
+    catBudgetKeys.sort().forEach(cat => {
+      const budgetAmtMonthly = data.categoryBudgets[cat];
+      const { baseCategory, vehicle } = parseCatBudgetName(cat);
+      const matchesEntry = (item) => {
+        if(normCat(item.category) !== normCat(baseCategory)) return false;
+        if(vehicle) return (item.vehicle || '').toLowerCase() === vehicle.toLowerCase();
+        return true;
+      };
+      const spentOneTimeMonth = expensesThisMonth.filter(matchesEntry).reduce((s,e)=>s+Number(e.amount),0);
+      const spentRecurringMonth = data.subscriptions.filter(matchesEntry).reduce((s,sub)=> s + confirmedInfo(sub, currentMonth).amount, 0);
+      const spentMonth = spentOneTimeMonth + spentRecurringMonth;
+      const pctMonth = budgetAmtMonthly ? Math.min(Math.round((spentMonth/budgetAmtMonthly)*100), 999) : 0;
+      const overMonth = spentMonth > budgetAmtMonthly;
+
+      const eligible = isWeeklyEligible(cat) && currentMonth === realTodayYm;
+      let spentWeek = 0, budgetWeek = 0, overWeek = false, pctWeek = 0;
+      if(eligible){
+        const todayDay = new Date().getDate();
+        let wkStart, wkEnd;
+        if(todayDay<=7){ wkStart=1; wkEnd=7; } else if(todayDay<=14){ wkStart=8; wkEnd=14; }
+        else if(todayDay<=21){ wkStart=15; wkEnd=21; } else if(todayDay<=28){ wkStart=22; wkEnd=28; }
+        else { wkStart=29; wkEnd=31; }
+        const spentOneTimeWeek = expensesThisMonth.filter(e => {
+          if(!e.date || !matchesEntry(e)) return false;
+          const d = Number(e.date.split('-')[2]);
+          return d >= wkStart && d <= wkEnd;
+        }).reduce((s,e)=>s+Number(e.amount),0);
+        spentWeek = spentOneTimeWeek + (spentRecurringMonth/4.33);
+        budgetWeek = budgetAmtMonthly/4.33;
+        overWeek = spentWeek > budgetWeek;
+        pctWeek = budgetWeek ? Math.min(Math.round((spentWeek/budgetWeek)*100), 999) : 0;
+      }
+
+      const color = categoryColors[cat] || categoryColors[baseCategory] || 'var(--muted)';
+      const card = document.createElement('div');
+      card.style.cssText = `background:var(--card-bg);border:1px solid var(--card-border);border-radius:4px;padding:12px;position:relative;overflow:hidden;`;
+
+      const weeklyBlock = eligible ? `
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">
+            <div><span style="font-family:var(--body);font-size:15px;font-weight:600;color:${overWeek?'var(--rust-dk)':'var(--gold-dk)'};">${fmt(spentWeek)}</span><span style="font-family:var(--body);font-size:9.5px;color:var(--muted);"> / ${fmt(budgetWeek)}</span></div>
+            <span style="font-family:var(--body);font-size:7px;color:var(--muted);letter-spacing:.03em;">SEMANA</span>
+          </div>
+          <div class="bar-bg" style="height:6px;"><div class="bar-fill" style="width:${Math.min(pctWeek,100)}%;background:${overWeek?'var(--rust-dk)':'var(--gold-dk)'};"></div></div>
+          <div style="font-family:var(--body);font-size:8.5px;color:${overWeek?'var(--rust-dk)':'var(--muted)'};margin-top:4px;text-transform:uppercase;letter-spacing:.02em;">${overWeek ? 'Sobre presupuesto' : pctWeek+'% usado'}</div>
+          <div style="border-top:1px dashed var(--card-border);margin:9px 0;"></div>
+      ` : '';
+
+      const monthLabel = eligible ? 'MES' : '';
+      const monthAmountSize = eligible ? '13px' : '17px';
+
+      card.innerHTML = `
+        <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${color};"></div>
+        <div style="padding-left:8px;">
+          <div data-cat-detail="${escapeHtml(cat)}" style="font-family:var(--body);font-size:12px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.25;min-height:30px;cursor:pointer;text-decoration:underline;text-decoration-color:${color};text-decoration-thickness:1.5px;text-underline-offset:3px;">${escapeHtml(cat)}</div>
+          ${weeklyBlock}
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px;">
+            <div><span style="font-family:var(--body);font-size:${monthAmountSize};font-weight:600;color:${overMonth?'var(--rust-dk)':'var(--gold-dk)'};">${fmt(spentMonth)}</span><span style="font-family:var(--body);font-size:9.5px;color:var(--muted);"> / ${fmt(budgetAmtMonthly)}</span></div>
+            ${monthLabel ? `<span style="font-family:var(--body);font-size:7px;color:var(--muted);letter-spacing:.03em;">${monthLabel}</span>` : ''}
+          </div>
+          <div class="bar-bg" style="height:${eligible?5:6}px;"><div class="bar-fill" style="width:${Math.min(pctMonth,100)}%;background:${overMonth?'var(--rust-dk)':'var(--gold-dk)'};"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <span style="font-family:var(--body);font-size:${eligible?8.5:9.5}px;color:${overMonth?'var(--rust-dk)':'var(--muted)'};text-transform:uppercase;letter-spacing:.02em;">${eligible ? (overMonth?'Sobre':'') + ' ' + pctMonth + '% del mes' : (overMonth ? 'Sobre presupuesto' : pctMonth+'% usado')}</span>
+            <button class="del-btn" data-cat-budget="${escapeHtml(cat)}" title="Quitar presupuesto" style="font-size:13px;">✕</button>
+          </div>
+          <div style="font-family:var(--body);font-size:9px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--card-border);padding-top:6px;">Al año: ${fmt(budgetAmtMonthly*12)}</div>
+        </div>
+      `;
+      listCatBudgets.appendChild(card);
+    });
+    document.querySelectorAll('[data-cat-budget]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(!confirm(`¿Seguro que quieres quitar el presupuesto de "${btn.dataset.catBudget}"?`)) return;
+        delete data.categoryBudgets[btn.dataset.catBudget];
+        render();
+        scheduleSave();
+      });
+    });
+    document.querySelectorAll('[data-cat-detail]').forEach(el => {
+      el.addEventListener('click', () => openCategoryDetail(el.dataset.catDetail));
+    });
+
+    // ---- Disponible tras compromisos ----
+    // Ingresos - presupuestado por categoría - recurrente sin categoría presupuestada - otros gastos (sin categoría presupuestada)
+    const budgetedCatsNorm = catBudgetKeys.map(normCat);
+    const totalPresupuestadoCats = catBudgetKeys.reduce((sum,cat) => sum + Number(data.categoryBudgets[cat]), 0);
+    const recurrenteSinPresupuesto = data.subscriptions
+      .filter(s => !budgetedCatsNorm.includes(normCat(s.category)))
+      .reduce((sum,s) => sum + confirmedInfo(s, currentMonth).amount, 0);
+    const recurrenteSinPresupuestoFull = data.subscriptions
+      .filter(s => !budgetedCatsNorm.includes(normCat(s.category)))
+      .reduce((sum,s) => sum + confirmedInfo(s, currentMonth).fullAmount, 0);
+    const otrosGastos = expensesThisMonth
+      .filter(e => !budgetedCatsNorm.includes(normCat(e.category)))
+      .reduce((sum,e) => sum + Number(e.amount), 0);
+    const ingresosTotalesCommit = totalIn + totalInRec;
+    const disponible = ingresosTotalesCommit - totalPresupuestadoCats - recurrenteSinPresupuesto - otrosGastos;
+
+    // Proyección anual (usa montos completos del mes ×12, no solo lo acumulado a la fecha)
+    const ingresosAnual = (totalIn + totalInRecFull) * 12;
+    const presupuestadoAnual = totalPresupuestadoCats * 12;
+    const recurrenteSinPresupuestoAnual = recurrenteSinPresupuestoFull * 12;
+    const otrosGastosAnual = otrosGastos * 12;
+    const disponibleAnual = ingresosAnual - presupuestadoAnual - recurrenteSinPresupuestoAnual - otrosGastosAnual;
+
+    const commitBody = document.getElementById('commitmentBody');
+    commitBody.innerHTML = `
+      <div class="report-row-top" style="padding:6px 0;"><span>Ingresos totales</span><span>${fmt(ingresosTotalesCommit)}</span></div>
+      <div class="report-row-top" style="padding:6px 0;color:var(--rust-dk);"><span>− Presupuestado (categorías)</span><span>${fmt(totalPresupuestadoCats)}</span></div>
+      <div class="report-row-top" style="padding:6px 0;color:var(--rust-dk);"><span>− Recurrente sin presupuesto</span><span>${fmt(recurrenteSinPresupuesto)}</span></div>
+      <div class="report-row-top" style="padding:6px 0;color:var(--rust-dk);"><span>− Otros gastos (sin categoría)</span><span>${fmt(otrosGastos)}</span></div>
+      <div class="report-row-top" style="padding:10px 0 2px;border-top:1px solid var(--line);margin-top:4px;font-size:15px;font-weight:600;">
+        <span>Disponible</span><span style="color:${disponible>=0?'var(--gold-dk)':'var(--rust-dk)'};">${fmt(disponible)}</span>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);">
+        <p style="font-family:var(--body);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;">Proyección a fin de año (×12)</p>
+        <div class="report-row-top" style="padding:4px 0;font-size:12.5px;"><span>Ingresos al año</span><span>${fmt(ingresosAnual)}</span></div>
+        <div class="report-row-top" style="padding:4px 0;font-size:12.5px;color:var(--rust-dk);"><span>− Presupuestado al año</span><span>${fmt(presupuestadoAnual)}</span></div>
+        <div class="report-row-top" style="padding:4px 0;font-size:12.5px;color:var(--rust-dk);"><span>− Recurrente sin presupuesto</span><span>${fmt(recurrenteSinPresupuestoAnual)}</span></div>
+        <div class="report-row-top" style="padding:4px 0;font-size:12.5px;color:var(--rust-dk);"><span>− Otros gastos (proyectado)</span><span>${fmt(otrosGastosAnual)}</span></div>
+        <div class="report-row-top" style="padding:8px 0 0;border-top:1px solid var(--line);margin-top:4px;font-size:14px;font-weight:600;">
+          <span>Disponible al año</span><span style="color:${disponibleAnual>=0?'var(--gold-dk)':'var(--rust-dk)'};">${fmt(disponibleAnual)}</span>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('.del-btn[data-type]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(!confirm('¿Seguro que quieres eliminar esto? No se puede deshacer.')) return;
+        const id = btn.dataset.id;
+        if(btn.dataset.type === 'income'){
+          data.incomes = data.incomes.filter(i => i.id !== id);
+        } else if(btn.dataset.type === 'recurringIncome'){
+          data.recurringIncomes = data.recurringIncomes.filter(i => i.id !== id);
+        } else if(btn.dataset.type === 'expense'){
+          data.expenses = data.expenses.filter(i => i.id !== id);
+        } else {
+          data.subscriptions = data.subscriptions.filter(i => i.id !== id);
+        }
+        render();
+        scheduleSave();
+      });
+    });
+
+    document.querySelectorAll('.del-btn[data-edit-type]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openEditModal(btn.dataset.editType, btn.dataset.id);
+      });
+    });
+
+    renderBudgetHealth();
+    renderSpendPattern();
+  }
+
+  document.getElementById('formBudget').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = parseFloat(document.getElementById('budgetInput').value);
+    data.budget = isNaN(val) || val <= 0 ? null : val;
+    render();
+    scheduleSave();
+  });
+
+  document.getElementById('formCategoryBudget').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('categoryBudgetName');
+    const amountInput = document.getElementById('categoryBudgetAmount');
+    const cat = titleCase(nameInput.value);
+    const amt = parseFloat(amountInput.value);
+    if(!cat || isNaN(amt) || amt <= 0) return;
+    data.categoryBudgets[cat] = amt;
+    nameInput.value = '';
+    amountInput.value = '';
+    render();
+    scheduleSave();
+  });
+
+  function toggleFreqFields(form){
+    const freq = form.frequency.value;
+    const weekSel = form.querySelector('.payday-week');
+    const monthInput = form.querySelector('.payday-month');
+    const onceDate = form.querySelector('.once-date');
+    const payMonthSel = form.querySelector('.pay-month');
+    if(!weekSel || !monthInput) return;
+    if(freq === 'once'){
+      weekSel.style.display = 'none';
+      monthInput.style.display = 'none';
+      if(onceDate) onceDate.style.display = 'block';
+      if(payMonthSel) payMonthSel.style.display = 'none';
+    } else if(freq === 'yearly'){
+      weekSel.style.display = 'none';
+      monthInput.style.display = 'block';
+      if(onceDate) onceDate.style.display = 'none';
+      if(payMonthSel) payMonthSel.style.display = 'block';
+    } else if(freq === 'monthly'){
+      weekSel.style.display = 'none';
+      monthInput.style.display = 'block';
+      if(onceDate) onceDate.style.display = 'none';
+      if(payMonthSel) payMonthSel.style.display = 'none';
+    } else {
+      weekSel.style.display = 'block';
+      monthInput.style.display = 'none';
+      if(onceDate) onceDate.style.display = 'none';
+      if(payMonthSel) payMonthSel.style.display = 'none';
+    }
+  }
+  document.querySelectorAll('.freq-select').forEach(sel => {
+    toggleFreqFields(sel.closest('form'));
+    sel.addEventListener('change', () => toggleFreqFields(sel.closest('form')));
+  });
+
+  document.querySelectorAll('.toggle-active-window').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const fieldsId = chk.id === 'toggleActiveWindowSub' ? 'activeWindowFieldsSub' : 'activeWindowFieldsInc';
+      document.getElementById(fieldsId).style.display = chk.checked ? 'flex' : 'none';
+    });
+  });
+
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    const [y,m] = currentMonth.split('-').map(Number);
+    const d = new Date(y, m-2, 1);
+    currentMonth = d.toISOString().slice(0,7);
+    render();
+  });
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    const [y,m] = currentMonth.split('-').map(Number);
+    const d = new Date(y, m, 1);
+    currentMonth = d.toISOString().slice(0,7);
+    render();
+  });
+
+  document.getElementById('formIngreso').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const name = f.name.value.trim();
+    const person = f.person.value;
+    const amount = parseFloat(f.amount.value);
+    const date = f.date.value || defaultDateForMonth(currentMonth);
+    const month = date.slice(0,7);
+    if(!name || isNaN(amount) || amount <= 0) return;
+    data.incomes.push({ id: 'i' + Date.now() + Math.random().toString(36).slice(2,6), name, person, amount, month, date });
+    f.reset();
+    render();
+    scheduleSave();
+  });
+
+  document.getElementById('formIngresoRecurrente').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const name = f.name.value.trim();
+    const person = f.person.value;
+    const amount = parseFloat(f.amount.value);
+    const frequency = f.frequency.value;
+    const payDay = frequency === 'monthly' ? f.payDayMonth.value : f.payDayWeek.value;
+    const activeFrom = f.activeFrom && f.activeFrom.value ? f.activeFrom.value : null;
+    const activeUntil = f.activeUntil && f.activeUntil.value ? f.activeUntil.value : null;
+    const requiresConfirmation = f.requiresConfirmation ? f.requiresConfirmation.checked : false;
+    if(!name || isNaN(amount) || amount <= 0) return;
+    data.recurringIncomes.push({ id: 'ri' + Date.now() + Math.random().toString(36).slice(2,6), name, person, amount, frequency, payDay: payDay === '' ? null : payDay, activeFrom, activeUntil, requiresConfirmation });
+    f.reset();
+    toggleFreqFields(f);
+    document.getElementById('activeWindowFieldsInc').style.display = 'none';
+    render();
+    scheduleSave();
+  });
+
+  document.getElementById('formGasto').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const name = f.name.value.trim();
+    const category = titleCase(f.category.value);
+    const amount = parseFloat(f.amount.value);
+    const date = f.date.value || defaultDateForMonth(currentMonth);
+    const month = date.slice(0,7);
+    if(!name || isNaN(amount) || amount <= 0) return;
+    const frequency = f.frequency ? f.frequency.value : 'once';
+    const vehicle = f.vehicle ? f.vehicle.value : '';
+    const gallons = f.gallons && f.gallons.value ? parseFloat(f.gallons.value) : null;
+    const priceGal = f.priceGal && f.priceGal.value ? parseFloat(f.priceGal.value) : null;
+    data.expenses.push({ id: 'e' + Date.now() + Math.random().toString(36).slice(2,6), name, category, amount, frequency, vehicle, gallons, priceGal, month, date });
+    f.reset();
+    render();
+    scheduleSave();
+  });
+
+  document.getElementById('formSuscripcion').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const name = f.name.value.trim();
+    const category = titleCase(f.category.value);
+    const amount = parseFloat(f.amount.value);
+    const frequency = f.frequency.value;
+    if(!name || isNaN(amount) || amount <= 0) return;
+    if(frequency === 'once'){
+      const date = (f.onceDate && f.onceDate.value) || defaultDateForMonth(currentMonth);
+      const month = date.slice(0,7);
+      data.expenses.push({ id: 'e' + Date.now() + Math.random().toString(36).slice(2,6), name, category, amount, month, date });
+    } else {
+      const payDay = (frequency === 'monthly' || frequency === 'yearly') ? f.payDayMonth.value : f.payDayWeek.value;
+      const payMonth = frequency === 'yearly' ? f.payMonth.value : null;
+      const activeFrom = f.activeFrom && f.activeFrom.value ? f.activeFrom.value : null;
+      const activeUntil = f.activeUntil && f.activeUntil.value ? f.activeUntil.value : null;
+      data.subscriptions.push({ id: 's' + Date.now() + Math.random().toString(36).slice(2,6), name, category, amount, frequency, payDay: payDay === '' ? null : payDay, payMonth, activeFrom, activeUntil });
+    }
+    f.reset();
+    toggleFreqFields(f);
+    const awFields = document.getElementById('activeWindowFieldsSub');
+    if(awFields) awFields.style.display = 'none';
+    render();
+    scheduleSave();
+  });
+
+  // ---- Report ----
+  document.getElementById('btnReport').addEventListener('click', () => {
+    const incomesThisMonth = data.incomes.filter(i => i.month === currentMonth);
+    const expensesThisMonth = data.expenses.filter(e => e.month === currentMonth);
+    const allOut = [...expensesThisMonth.map(e => ({category:e.category, amount:Number(e.amount)})),
+                    ...data.subscriptions.map(s => ({category:s.category, amount:confirmedInfo(s, currentMonth).amount}))];
+
+    const byCategory = {};
+    allOut.forEach(e => { byCategory[e.category] = (byCategory[e.category]||0) + e.amount; });
+    const totalOut = Object.values(byCategory).reduce((a,b)=>a+b,0);
+    const totalSub = data.subscriptions.reduce((sum,s)=> sum + confirmedInfo(s, currentMonth).amount, 0);
+
+    const byPerson = {};
+    incomesThisMonth.forEach(i => { byPerson[i.person] = (byPerson[i.person]||0) + Number(i.amount); });
+    data.recurringIncomes.forEach(i => {
+      byPerson[i.person] = (byPerson[i.person]||0) + incomeInfo(i, currentMonth).amount;
+    });
+    const totalIn = Object.values(byPerson).reduce((a,b)=>a+b,0);
+
+    document.getElementById('reportTitle').textContent = 'Informe · ' + monthLabel(currentMonth);
+
+    let html = '<div class="report-row"><strong style="font-family:\'Bebas Neue\',sans-serif;font-size:17px;letter-spacing:.02em;">Ingresos por persona</strong></div>';
+    if(Object.keys(byPerson).length === 0){
+      html += '<div class="report-row" style="color:var(--muted);font-style:italic;font-size:13px;">Sin ingresos registrados.</div>';
+    } else {
+      Object.entries(byPerson).sort((a,b)=>b[1]-a[1]).forEach(([person,amt]) => {
+        const pct = totalIn ? Math.round((amt/totalIn)*100) : 0;
+        html += `<div class="report-row">
+          <div class="report-row-top"><span>${escapeHtml(person)}</span><span>${fmt(amt)} · ${pct}%</span></div>
+          <div class="bar-bg"><div class="bar-fill in" style="width:${pct}%"></div></div>
+        </div>`;
+      });
+    }
+
+    html += '<div class="report-row" style="padding-top:16px;"><strong style="font-family:\'Bebas Neue\',sans-serif;font-size:17px;letter-spacing:.02em;">Gastos por categoría</strong></div>';
+    if(Object.keys(byCategory).length === 0){
+      html += '<div class="report-row" style="color:var(--muted);font-style:italic;font-size:13px;">Sin gastos registrados.</div>';
+    } else {
+      Object.entries(byCategory).sort((a,b)=>b[1]-a[1]).forEach(([cat,amt]) => {
+        const pct = totalOut ? Math.round((amt/totalOut)*100) : 0;
+        html += `<div class="report-row">
+          <div class="report-row-top"><span>${escapeHtml(cat)}</span><span>${fmt(amt)} · ${pct}%</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      });
+    }
+
+    // ---- Gastos por semana (solo gastos únicos con fecha) ----
+    const weekBuckets = {'Semana 1 (1-7)':0,'Semana 2 (8-14)':0,'Semana 3 (15-21)':0,'Semana 4 (22-28)':0,'Semana 5 (29-31)':0,'Sin fecha':0};
+    const weekHighest = {'Semana 1 (1-7)':null,'Semana 2 (8-14)':null,'Semana 3 (15-21)':null,'Semana 4 (22-28)':null,'Semana 5 (29-31)':null,'Sin fecha':null};
+    function trackHighest(bucket, e){
+      if(!weekHighest[bucket] || Number(e.amount) > weekHighest[bucket].amount){
+        weekHighest[bucket] = { name: e.name, amount: Number(e.amount) };
+      }
+    }
+    expensesThisMonth.forEach(e => {
+      if(!e.date){ weekBuckets['Sin fecha'] += Number(e.amount); trackHighest('Sin fecha', e); return; }
+      const day = Number(e.date.split('-')[2]);
+      let bucket;
+      if(day<=7) bucket = 'Semana 1 (1-7)';
+      else if(day<=14) bucket = 'Semana 2 (8-14)';
+      else if(day<=21) bucket = 'Semana 3 (15-21)';
+      else if(day<=28) bucket = 'Semana 4 (22-28)';
+      else bucket = 'Semana 5 (29-31)';
+      weekBuckets[bucket] += Number(e.amount);
+      trackHighest(bucket, e);
+    });
+    const weekTotal = Object.values(weekBuckets).reduce((a,b)=>a+b,0);
+    html += '<div class="report-row" style="padding-top:16px;"><strong style="font-family:\'Bebas Neue\',sans-serif;font-size:17px;letter-spacing:.02em;">Gastos únicos por semana</strong></div>';
+    if(weekTotal === 0){
+      html += '<div class="report-row" style="color:var(--muted);font-style:italic;font-size:13px;">Sin gastos con fecha este mes.</div>';
+    } else {
+      Object.entries(weekBuckets).forEach(([wk,amt]) => {
+        if(amt === 0) return;
+        const pct = weekTotal ? Math.round((amt/weekTotal)*100) : 0;
+        const highest = weekHighest[wk];
+        html += `<div class="report-row">
+          <div class="report-row-top"><span>${wk}</span><span>${fmt(amt)} · ${pct}%</span></div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+          ${highest ? `<div style="font-size:11.5px;color:var(--muted);margin-top:4px;font-style:italic;">Mayor gasto: ${escapeHtml(highest.name)} — ${fmt(highest.amount)}</div>` : ''}
+        </div>`;
+      });
+    }
+
+    // ---- Comparación con el mes anterior ----
+    const [py,pm] = currentMonth.split('-').map(Number);
+    const prevDate = new Date(py, pm-2, 1);
+    const prevMonth = prevDate.toISOString().slice(0,7);
+    const prevExpenses = data.expenses.filter(e => e.month === prevMonth).reduce((s,e)=>s+Number(e.amount),0);
+    const prevSubsTotal = data.subscriptions.reduce((sum,s)=> sum + confirmedInfo(s, prevMonth).amount, 0);
+    const prevTotalOut = prevExpenses + prevSubsTotal;
+    let comparisonLine = '';
+    if(prevTotalOut > 0){
+      const diff = totalOut - prevTotalOut;
+      const diffPct = Math.round((diff/prevTotalOut)*100);
+      const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+      comparisonLine = `<div class="report-row" style="padding-top:16px;">
+        <div class="report-row-top"><span>Vs. ${monthLabel(prevMonth)}</span><span style="color:${diff>0?'var(--rust-dk)':'var(--gold-dk)'}">${arrow} ${fmt(Math.abs(diff))} (${diffPct>0?'+':''}${diffPct}%)</span></div>
+      </div>`;
+    }
+    html += comparisonLine;
+
+    const balance = totalIn - totalOut;
+    html += `<div class="report-row" style="padding-top:16px;">
+      <div class="report-row-top" style="font-size:15px;font-weight:600;">
+        <span>Balance del mes</span><span style="color:${balance>=0?'var(--gold-dk)':'var(--rust-dk)'}">${fmt(balance)}</span>
+      </div>
+    </div>`;
+
+    // ---- Recomendaciones ----
+    const recs = [];
+    const sortedCats = Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+    if(balance < 0){
+      recs.push('Este mes gastaste más de lo que entró. ' + (sortedCats[0] ? `La categoría "${sortedCats[0][0]}" es donde más se fue el dinero — revisa si hay algo que se pueda recortar ahí.` : ''));
+    }
+    if(data.budget != null && data.budget > 0){
+      if(totalOut > data.budget){
+        recs.push(`Te sobregiraste del presupuesto por ${fmt(totalOut - data.budget)}.`);
+      } else {
+        recs.push(`Te mantuviste dentro del presupuesto, con ${fmt(data.budget - totalOut)} de margen.`);
+      }
+    } else {
+      recs.push('No tienes un presupuesto mensual definido — poner una meta te ayuda a ver si te estás sobregirando.');
+    }
+    if(sortedCats.length && totalOut > 0){
+      const [topCat, topAmt] = sortedCats[0];
+      const topPct = Math.round((topAmt/totalOut)*100);
+      if(topPct >= 40){
+        recs.push(`"${topCat}" representa el ${topPct}% de tus gastos este mes — es una porción grande, vale la pena revisarla.`);
+      }
+    }
+    const ahorrosAmt = byCategory['Ahorros'] || 0;
+    if(totalIn > 0 && ahorrosAmt < totalIn * 0.1){
+      recs.push('Estás ahorrando menos del 10% de tus ingresos este mes. Si es posible, trata de apartar aunque sea un poco más.');
+    }
+    if(totalIn > 0 && totalSub > totalIn * 0.2){
+      recs.push(`Tus pagos recurrentes (suscripciones, cuotas fijas) suman ${fmt(totalSub)}, más del 20% de tus ingresos. Podría valer la pena revisar cuáles realmente usas.`);
+    }
+    if(prevTotalOut > 0 && totalOut > prevTotalOut * 1.15){
+      const pctUp = Math.round(((totalOut-prevTotalOut)/prevTotalOut)*100);
+      recs.push(`Gastaste ${pctUp}% más que el mes pasado. Vale la pena revisar qué cambió.`);
+    } else if(prevTotalOut > 0 && totalOut < prevTotalOut * 0.85){
+      recs.push('Gastaste notablemente menos que el mes pasado — buen trabajo controlando el gasto.');
+    }
+
+    html += '<div class="report-row" style="padding-top:16px;"><strong style="font-family:\'Bebas Neue\',sans-serif;font-size:17px;letter-spacing:.02em;">Recomendaciones</strong></div>';
+    if(recs.length === 0){
+      html += '<div class="report-row" style="color:var(--muted);font-style:italic;font-size:13px;">Todo se ve balanceado este mes.</div>';
+    } else {
+      recs.forEach(r => {
+        html += `<div class="report-row" style="font-size:13px;line-height:1.5;">• ${escapeHtml(r)}</div>`;
+      });
+    }
+
+    document.getElementById('reportBody').innerHTML = html;
+    document.getElementById('reportModal').classList.add('open');
+  });
+
+  document.getElementById('closeReport').addEventListener('click', () => {
+    document.getElementById('reportModal').classList.remove('open');
+  });
+  document.getElementById('reportModal').addEventListener('click', (e) => {
+    if(e.target.id === 'reportModal') document.getElementById('reportModal').classList.remove('open');
+  });
+
+  // ---- Edit modal (para recurrentes) ----
+  const dayOptionsHtml = dayNames.map((d,i) => `<option value="${i}">${d.charAt(0).toUpperCase()+d.slice(1)}</option>`).join('');
+  const inputStyle = "font-family:var(--body);font-size:13.5px;padding:9px 10px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--ink);width:100%;";
+
+  function getListForType(type){
+    if(type === 'subscription') return data.subscriptions;
+    if(type === 'recurringIncome') return data.recurringIncomes;
+    if(type === 'expense') return data.expenses;
+    return data.incomes;
+  }
+
+  function openCategoryDetail(cat){
+    const { baseCategory, vehicle } = parseCatBudgetName(cat);
+    const matchesEntry = (item) => {
+      if(normCat(item.category) !== normCat(baseCategory)) return false;
+      if(vehicle) return (item.vehicle || '').toLowerCase() === vehicle.toLowerCase();
+      return true;
+    };
+    const budgetAmtMonthly = data.categoryBudgets[cat];
+    const expensesInCat = data.expenses.filter(e => e.month === currentMonth && matchesEntry(e));
+    const subsInCat = data.subscriptions.filter(matchesEntry);
+    const spentOneTime = expensesInCat.reduce((s,e)=>s+Number(e.amount),0);
+    const spentRecurring = subsInCat.reduce((s,sub)=> s + confirmedInfo(sub, currentMonth).amount, 0);
+    const spentMonth = spentOneTime + spentRecurring;
+    const pct = budgetAmtMonthly ? Math.round((spentMonth/budgetAmtMonthly)*100) : 0;
+    const over = budgetAmtMonthly != null && spentMonth > budgetAmtMonthly;
+
+    document.getElementById('categoryDetailTitle').textContent = cat + ' · ' + monthLabel(currentMonth);
+    let html = `<div style="padding:14px 16px;border-bottom:1px solid var(--card-border);">
+      <div class="report-row-top" style="font-size:15px;font-weight:600;">
+        <span>Gastado este mes</span>
+        <span style="color:${over?'var(--rust-dk)':'var(--gold-dk)'};">${fmt(spentMonth)}${budgetAmtMonthly!=null?` / ${fmt(budgetAmtMonthly)}`:''}</span>
+      </div>
+      ${budgetAmtMonthly!=null ? `<div class="bar-bg" style="height:7px;margin-top:8px;"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${over?'var(--rust-dk)':'var(--gold-dk)'};"></div></div>
+      <div style="font-family:var(--body);font-size:10.5px;color:${over?'var(--rust-dk)':'var(--muted)'};margin-top:6px;">${over ? `Sobregirado por ${fmt(spentMonth-budgetAmtMonthly)}` : `${fmt(budgetAmtMonthly-spentMonth)} disponible`} · ${pct}%</div>` : ''}
+    </div>`;
+
+    html += `<div style="padding:12px 16px 4px;"><p style="font-family:var(--body);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0;">Movimientos de este mes</p></div>`;
+
+    const allEntries = [
+      ...expensesInCat.map(e => ({ name:e.name, amount:Number(e.amount), sub:e.date ? dateLabel(e.date).replace(' · ','') : 'Sin fecha', recurring:false })),
+      ...subsInCat.map(s => {
+        const info = confirmedInfo(s, currentMonth);
+        const freq = s.frequency || 'monthly';
+        const freqLabel = capitalize(freq === 'weekly' ? 'semanal' : freq === 'biweekly' ? 'bisemanal' : freq === 'yearly' ? 'anual' : 'mensual');
+        return { name:s.name, amount:info.amount, sub:`Recurrente · ${freqLabel}${payDayLabel(s)}`, recurring:true };
+      })
+    ].sort((a,b) => b.amount - a.amount);
+
+    if(allEntries.length === 0){
+      html += `<div style="padding:8px 16px 18px;color:var(--muted);font-style:italic;font-size:13px;">Sin movimientos en esta categoría este mes.</div>`;
+    } else {
+      html += `<ul class="entries" style="padding-bottom:8px;">`;
+      allEntries.forEach(item => {
+        html += `<li>
+          <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.sub)}</span></div>
+          <div class="entry-amount ${item.recurring?'in':'out'}" style="color:var(--gold-dk);">${fmt(item.amount)}</div>
+        </li>`;
+      });
+      html += `</ul>`;
+    }
+
+    document.getElementById('categoryDetailBody').innerHTML = html;
+    document.getElementById('categoryDetailModal').classList.add('open');
+  }
+  document.getElementById('closeCategoryDetail').addEventListener('click', () => {
+    document.getElementById('categoryDetailModal').classList.remove('open');
+  });
+  document.getElementById('categoryDetailModal').addEventListener('click', (e) => {
+    if(e.target.id === 'categoryDetailModal') document.getElementById('categoryDetailModal').classList.remove('open');
+  });
+
+  function openEditModal(type, id){
+    const list = getListForType(type);
+    const item = list.find(i => i.id === id);
+    if(!item) return;
+    const isRecurring = (type === 'subscription' || type === 'recurringIncome');
+    const isSubOrExpense = (type === 'subscription' || type === 'expense');
+    const personOptions = ['Yo','Esposa','Otro'];
+    const currentVal = isSubOrExpense ? item.category : item.person;
+    const titles = {subscription:'suscripción', recurringIncome:'ingreso recurrente', expense:'gasto', income:'ingreso'};
+
+    document.getElementById('editTitle').textContent = 'Editar ' + titles[type];
+    const form = document.getElementById('formEdit');
+
+    const monthOptionsHtml = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+      .map((m,i) => `<option value="${i+1}" ${Number(item.payMonth)===i+1?'selected':''}>${m}</option>`).join('');
+
+    const recurringFields = `
+      <select name="frequency" class="edit-freq-select" style="${inputStyle}">
+        <option value="monthly" ${item.frequency==='monthly'?'selected':''}>Cada mes</option>
+        <option value="biweekly" ${item.frequency==='biweekly'?'selected':''}>Cada 2 semanas</option>
+        <option value="weekly" ${item.frequency==='weekly'?'selected':''}>Cada semana</option>
+        <option value="yearly" ${item.frequency==='yearly'?'selected':''}>Anual</option>
+      </select>
+      <select name="payMonth" class="edit-pay-month" style="${inputStyle}">${monthOptionsHtml}</select>
+      <select name="payDayWeek" class="edit-payday-week" style="${inputStyle}">${dayOptionsHtml}</select>
+      <input type="number" name="payDayMonth" class="edit-payday-month" placeholder="Día del mes (1-31)" min="1" max="31" style="${inputStyle}">`;
+
+    const dateField = `<input type="date" name="date" value="${item.date || ''}" style="${inputStyle}">`;
+    const vehicleField = (type === 'expense')
+      ? `<select name="vehicle" style="${inputStyle}"><option value="">Vehículo (opcional)</option><option value="Mazda" ${item.vehicle==='Mazda'?'selected':''}>Mazda</option><option value="Kia" ${item.vehicle==='Kia'?'selected':''}>Kia</option><option value="Otro" ${item.vehicle==='Otro'?'selected':''}>Otro vehículo</option></select>`
+      : '';
+    const requiresConfirmationField = (type === 'recurringIncome')
+      ? `<label class="checkbox-row"><input type="checkbox" name="requiresConfirmation" ${item.requiresConfirmation?'checked':''}> No es 100% garantizado (ej. renta) — pedir confirmación cada mes</label>`
+      : '';
+
+    const catOrPersonField = isSubOrExpense
+      ? `<input type="text" name="category" list="categoryList" value="${escapeHtml(currentVal)}" style="${inputStyle}" required>`
+      : `<select name="person" style="${inputStyle}">${personOptions.map(o => `<option value="${o}" ${o===currentVal?'selected':''}>${o}</option>`).join('')}</select>`;
+
+    const activeWindowField = isRecurring ? `
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;">Activo desde (opcional)</label>
+          <input type="month" name="activeFrom" value="${item.activeFrom || ''}" style="${inputStyle}">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;">Activo hasta (opcional)</label>
+          <input type="month" name="activeUntil" value="${item.activeUntil || ''}" style="${inputStyle}">
+        </div>
+      </div>` : '';
+
+    form.innerHTML = `
+      <input type="text" name="name" value="${escapeHtml(item.name)}" style="${inputStyle}" required>
+      ${catOrPersonField}
+      <input type="number" name="amount" value="${item.amount}" step="0.01" min="0" style="${inputStyle}" required>
+      ${isRecurring ? recurringFields : dateField}
+      ${vehicleField}
+      ${requiresConfirmationField}
+      ${activeWindowField}
+      <button type="submit" style="font-family:var(--body);font-size:12.5px;font-weight:600;padding:10px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">Guardar cambios</button>
+    `;
+
+    if(isRecurring){
+      if(item.frequency === 'monthly' || item.frequency === 'yearly'){
+        form.querySelector('.edit-payday-month').value = item.payDay != null ? item.payDay : '';
+      } else {
+        form.querySelector('.edit-payday-week').value = item.payDay != null ? item.payDay : '5';
+      }
+      toggleFreqFieldsEdit(form);
+      form.querySelector('.edit-freq-select').addEventListener('change', () => toggleFreqFieldsEdit(form));
+    }
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const f = e.target;
+      item.name = f.name.value.trim();
+      if(isSubOrExpense) item.category = titleCase(f.category.value); else item.person = f.person.value;
+      item.amount = parseFloat(f.amount.value);
+      if(isRecurring){
+        item.frequency = f.frequency.value;
+        item.payDay = (item.frequency === 'monthly' || item.frequency === 'yearly') ? (f.payDayMonth.value || null) : f.payDayWeek.value;
+        item.payMonth = item.frequency === 'yearly' ? f.payMonth.value : null;
+        item.activeFrom = (f.activeFrom && f.activeFrom.value) ? f.activeFrom.value : null;
+        item.activeUntil = (f.activeUntil && f.activeUntil.value) ? f.activeUntil.value : null;
+        if(type === 'recurringIncome') item.requiresConfirmation = f.requiresConfirmation ? f.requiresConfirmation.checked : false;
+      } else {
+        item.date = f.date.value || item.date;
+        if(item.date) item.month = item.date.slice(0,7);
+        if(type === 'expense' && f.vehicle) item.vehicle = f.vehicle.value || '';
+      }
+      document.getElementById('editModal').classList.remove('open');
+      render();
+      scheduleSave();
+    };
+
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function toggleFreqFieldsEdit(form){
+    const freq = form.querySelector('.edit-freq-select').value;
+    const weekSel = form.querySelector('.edit-payday-week');
+    const monthInput = form.querySelector('.edit-payday-month');
+    const payMonthSel = form.querySelector('.edit-pay-month');
+    if(freq === 'yearly'){
+      weekSel.style.display = 'none';
+      monthInput.style.display = 'block';
+      if(payMonthSel) payMonthSel.style.display = 'block';
+    } else if(freq === 'monthly'){
+      weekSel.style.display = 'none';
+      monthInput.style.display = 'block';
+      if(payMonthSel) payMonthSel.style.display = 'none';
+    } else {
+      weekSel.style.display = 'block';
+      monthInput.style.display = 'none';
+      if(payMonthSel) payMonthSel.style.display = 'none';
+    }
+  }
+
+  document.getElementById('closeEdit').addEventListener('click', () => {
+    document.getElementById('editModal').classList.remove('open');
+  });
+  document.getElementById('editModal').addEventListener('click', (e) => {
+    if(e.target.id === 'editModal') document.getElementById('editModal').classList.remove('open');
+  });
+
+  // ---- Export backup ----
+  async function exportBackupNow(){
+    const fileName = 'presupuesto-familiar-respaldo-' + currentMonth + '.json';
+    const jsonText = JSON.stringify(data, null, 2);
+
+    if(window.showSaveFilePicker){
+      try{
+        const handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'Respaldo JSON', accept: { 'application/json': ['.json'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(jsonText);
+        await writable.close();
+        setSyncStatus('Respaldo guardado ✓');
+        setTimeout(()=>{ if(document.getElementById('statusMsg').textContent==='Respaldo guardado ✓') document.getElementById('statusMsg').textContent=''; }, 2000);
+        return;
+      }catch(err){
+        if(err && err.name === 'AbortError') return;
+      }
+    }
+    const blob = new Blob([jsonText], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const LAST_SEEN_MONTH_KEY = 'presupuesto-last-seen-month';
+  function checkNewMonthBanner(){
+    try{
+      const realYm = new Date().toISOString().slice(0,7);
+      const lastSeen = localStorage.getItem(LAST_SEEN_MONTH_KEY);
+      const hasAnyData = data.incomes.length || data.expenses.length || data.subscriptions.length || data.recurringIncomes.length;
+      if(lastSeen && lastSeen !== realYm && hasAnyData){
+        document.getElementById('newMonthBanner').style.display = 'block';
+      }
+      localStorage.setItem(LAST_SEEN_MONTH_KEY, realYm);
+    }catch(e){}
+  }
+  document.getElementById('btnNewMonthExport').addEventListener('click', async () => {
+    await exportBackupNow();
+    document.getElementById('newMonthBanner').style.display = 'none';
+  });
+  document.getElementById('btnNewMonthDismiss').addEventListener('click', () => {
+    document.getElementById('newMonthBanner').style.display = 'none';
+  });
+
+  document.getElementById('btnExport').addEventListener('click', async () => {
+    const fileName = 'presupuesto-familiar-respaldo-' + currentMonth + '.json';
+    const jsonText = JSON.stringify(data, null, 2);
+
+    // Chrome/Edge en Android y escritorio: deja elegir la carpeta cada vez (ej. "Presupuesto familiar Data")
+    if(window.showSaveFilePicker){
+      try{
+        const handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'Respaldo JSON', accept: { 'application/json': ['.json'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(jsonText);
+        await writable.close();
+        setSyncStatus('Respaldo guardado ✓');
+        setTimeout(()=>{ if(document.getElementById('statusMsg').textContent==='Respaldo guardado ✓') document.getElementById('statusMsg').textContent=''; }, 2000);
+        return;
+      }catch(err){
+        if(err && err.name === 'AbortError') return; // el usuario canceló el diálogo
+        // si falla por otra razón, cae al método de siempre abajo
+      }
+    }
+
+    // Respaldo: descarga normal a la carpeta de Downloads del navegador
+    const blob = new Blob([jsonText], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ---- Import backup ----
+  document.getElementById('btnImport').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+  });
+
+  document.getElementById('importFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let parsed;
+      try{
+        parsed = JSON.parse(reader.result);
+      }catch(err){
+        alert('Ese archivo no es un respaldo válido (no es JSON).');
+        e.target.value = '';
+        return;
+      }
+      const looksValid = parsed && (Array.isArray(parsed.incomes) || Array.isArray(parsed.expenses) || Array.isArray(parsed.subscriptions) || Array.isArray(parsed.recurringIncomes));
+      if(!looksValid){
+        alert('Ese archivo no tiene el formato esperado de un respaldo de Presupuesto Familiar.');
+        e.target.value = '';
+        return;
+      }
+      const ok = confirm('Esto va a reemplazar todos los datos actuales con los del respaldo. ¿Continuar?');
+      if(!ok){ e.target.value = ''; return; }
+
+      data.incomes = parsed.incomes || [];
+      data.expenses = parsed.expenses || [];
+      data.subscriptions = parsed.subscriptions || [];
+      data.recurringIncomes = parsed.recurringIncomes || [];
+      data.budget = parsed.budget != null ? parsed.budget : null;
+        data.categoryBudgets = parsed.categoryBudgets || {};
+
+      render();
+      await saveLocalOnly();
+      if(syncId) await pushToRemote();
+      setSyncStatus('Respaldo importado ✓');
+      setTimeout(()=>{ if(document.getElementById('statusMsg').textContent==='Respaldo importado ✓') document.getElementById('statusMsg').textContent=''; }, 2000);
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  function setDashboardPeriod(period){
+    dashboardPeriod = period;
+    const wBtn = document.getElementById('btnPeriodWeekly');
+    const mBtn = document.getElementById('btnPeriodMonthly');
+    if(period === 'weekly'){
+      wBtn.style.background = 'var(--ledger-dk)'; wBtn.style.color = 'var(--gold)';
+      mBtn.style.background = 'transparent'; mBtn.style.color = 'var(--muted)';
+    } else {
+      mBtn.style.background = 'var(--ledger-dk)'; mBtn.style.color = 'var(--gold)';
+      wBtn.style.background = 'transparent'; wBtn.style.color = 'var(--muted)';
+    }
+    render();
+  }
+  document.getElementById('btnPeriodWeekly').addEventListener('click', () => setDashboardPeriod('weekly'));
+  document.getElementById('btnPeriodMonthly').addEventListener('click', () => setDashboardPeriod('monthly'));
+
+  document.getElementById('btnPatternWeekday').addEventListener('click', () => {
+    spendPatternMode = 'weekday';
+    document.getElementById('btnPatternWeekday').style.background = 'var(--ledger-dk)';
+    document.getElementById('btnPatternWeekday').style.color = 'var(--gold)';
+    document.getElementById('btnPatternMonthly').style.background = 'transparent';
+    document.getElementById('btnPatternMonthly').style.color = 'var(--muted)';
+    renderSpendPattern();
+  });
+  document.getElementById('btnPatternMonthly').addEventListener('click', () => {
+    spendPatternMode = 'monthly';
+    document.getElementById('btnPatternMonthly').style.background = 'var(--ledger-dk)';
+    document.getElementById('btnPatternMonthly').style.color = 'var(--gold)';
+    document.getElementById('btnPatternWeekday').style.background = 'transparent';
+    document.getElementById('btnPatternWeekday').style.color = 'var(--muted)';
+    renderSpendPattern();
+  });
+
+  let spendPatternMode = 'weekday'; // 'weekday' | 'monthly'
+
+  function renderSpendPattern(){
+    const body = document.getElementById('spendPatternBody');
+    if(!body) return;
+
+    if(spendPatternMode === 'weekday'){
+      const dayNamesShort = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      const totals = [0,0,0,0,0,0,0];
+      const expensesThisMonthForPattern = data.expenses.filter(e => e.month === currentMonth);
+      expensesThisMonthForPattern.forEach(e => {
+        if(!e.date) return;
+        const [y,m,d] = e.date.split('-').map(Number);
+        const wd = new Date(y, m-1, d).getDay();
+        totals[wd] += Number(e.amount);
+      });
+      const maxVal = Math.max(...totals, 1);
+
+      const incomesThisMonthForPattern = data.incomes.filter(i => i.month === currentMonth).reduce((s,i)=>s+Number(i.amount),0);
+      const recurIncomeMonthly = data.recurringIncomes.reduce((s,i)=> s + incomeInfo(i, currentMonth).amount, 0);
+      const totalIncomeMonth = incomesThisMonthForPattern + recurIncomeMonthly;
+      const daysElapsed = (currentMonth === new Date().toISOString().slice(0,7)) ? new Date().getDate() : daysInMonthOf(currentMonth);
+      const avgIncomePerDay = daysElapsed ? totalIncomeMonth / daysElapsed : 0;
+
+      let html = `<div style="display:flex;align-items:flex-end;gap:6px;height:120px;margin-bottom:8px;">`;
+      for(let wd=0; wd<7; wd++){
+        const h = Math.round((totals[wd]/maxVal)*95) + 5;
+        html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+          <span style="font-family:var(--body);font-size:7.5px;color:var(--muted);margin-bottom:3px;">${totals[wd]>0?fmt(totals[wd]).replace('.00',''):''}</span>
+          <div style="width:100%;height:${h}px;background:var(--gold-dk);border-radius:3px 3px 0 0;"></div>
+          <span style="font-family:var(--body);font-size:8px;color:var(--muted);margin-top:4px;">${dayNamesShort[wd]}</span>
+        </div>`;
+      }
+      html += `</div>`;
+      html += `<p style="font-family:var(--body);font-size:9.5px;color:var(--muted);margin:0;text-align:center;">Ingreso promedio por día: <span style="color:var(--gold);">${fmt(avgIncomePerDay)}</span></p>`;
+      body.innerHTML = html;
+    } else {
+      // Vista mensual: últimos 6 meses, gastos vs ingresos
+      const monthNamesShort2 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const months = [];
+      const [cy,cm] = currentMonth.split('-').map(Number);
+      for(let i=5; i>=0; i--){
+        const d = new Date(cy, cm-1-i, 1);
+        months.push(d.toISOString().slice(0,7));
+      }
+      const gastosPorMes = months.map(ym => {
+        const oneTime = data.expenses.filter(e => e.month === ym).reduce((s,e)=>s+Number(e.amount),0);
+        const recur = data.subscriptions.reduce((s,sub)=> s + confirmedInfo(sub, ym).amount, 0);
+        return oneTime + recur;
+      });
+      const ingresosPorMes = months.map(ym => {
+        const oneTime = data.incomes.filter(i => i.month === ym).reduce((s,i)=>s+Number(i.amount),0);
+        const recur = data.recurringIncomes.reduce((s,i)=> s + incomeInfo(i, ym).amount, 0);
+        return oneTime + recur;
+      });
+      const maxVal = Math.max(...gastosPorMes, ...ingresosPorMes, 1);
+
+      let html = `<div style="display:flex;gap:10px;font-family:var(--body);font-size:8px;color:var(--muted);margin-bottom:6px;justify-content:center;">
+        <span><span style="display:inline-block;width:8px;height:8px;background:var(--gold-dk);border-radius:2px;margin-right:3px;"></span>Ingresos</span>
+        <span><span style="display:inline-block;width:8px;height:8px;background:var(--rust-dk);border-radius:2px;margin-right:3px;"></span>Gastos</span>
+      </div>`;
+      html += `<div style="display:flex;align-items:flex-end;gap:8px;height:120px;margin-bottom:8px;">`;
+      months.forEach((ym,idx) => {
+        const hIn = Math.round((ingresosPorMes[idx]/maxVal)*95) + 3;
+        const hOut = Math.round((gastosPorMes[idx]/maxVal)*95) + 3;
+        const [,mm] = ym.split('-').map(Number);
+        html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+          <div style="display:flex;gap:2px;align-items:flex-end;width:100%;justify-content:center;height:100%;">
+            <div style="width:40%;height:${hIn}px;background:var(--gold-dk);border-radius:2px 2px 0 0;"></div>
+            <div style="width:40%;height:${hOut}px;background:var(--rust-dk);border-radius:2px 2px 0 0;"></div>
+          </div>
+          <span style="font-family:var(--body);font-size:8px;color:var(--muted);margin-top:4px;">${monthNamesShort2[mm-1]}</span>
+        </div>`;
+      });
+      html += `</div>`;
+      body.innerHTML = html;
+    }
+  }
+
+  function renderBudgetHealth(){
+    const body = document.getElementById('budgetHealthBody');
+    const notes = [];
+
+    // 1) Cuánto de tu presupuesto mensual ya está comprometido en recurrentes
+    const totalSubsAnnual = data.subscriptions.reduce((s,sub) => s + annualTotal(sub), 0);
+    const totalSubsMonthly = totalSubsAnnual / 12;
+    if(data.budget){
+      const pctCommitted = Math.round((totalSubsMonthly / data.budget) * 100);
+      notes.push({
+        level: pctCommitted >= 85 ? 'rust' : pctCommitted >= 65 ? 'gold' : 'ok',
+        text: `Tus recurrentes/suscripciones suman ${fmt(totalSubsMonthly)}/mes — ${pctCommitted}% de tu presupuesto total de ${fmt(data.budget)}.`
+      });
+    }
+
+    // 2) Categorías donde lo recurrente YA solo supera el presupuesto de esa categoría
+    const recurringByCat = {};
+    data.subscriptions.forEach(sub => {
+      const key = titleCase(sub.category);
+      recurringByCat[key] = (recurringByCat[key] || 0) + (annualTotal(sub) / 12);
+    });
+    Object.keys(data.categoryBudgets).forEach(cat => {
+      const recurMonthly = recurringByCat[titleCase(cat)] || 0;
+      const budgetAmt = data.categoryBudgets[cat];
+      if(recurMonthly > budgetAmt){
+        notes.push({
+          level: 'rust',
+          text: `"${cat}": lo recurrente solo ya suma ${fmt(recurMonthly)}/mes, por encima del presupuesto de ${fmt(budgetAmt)}.`
+        });
+      }
+    });
+
+    // 3) Nombres duplicados entre suscripciones (solo informativo, no asume error)
+    const nameCounts = {};
+    data.subscriptions.forEach(sub => {
+      const key = normCat(sub.name);
+      nameCounts[key] = (nameCounts[key] || 0) + 1;
+    });
+    Object.keys(nameCounts).forEach(key => {
+      if(nameCounts[key] > 1){
+        const original = data.subscriptions.find(s => normCat(s.name) === key).name;
+        notes.push({
+          level: 'ok',
+          text: `${nameCounts[key]} suscripciones llamadas "${original}" — si son cosas distintas (ej. letra para identificar a la persona), no es nada; solo un aviso informativo.`
+        });
+      }
+    });
+
+    // 4) Facturas mensuales grandes sin confirmar este mes (usa el mismo umbral que el Checklist)
+    const todayYm = new Date().toISOString().slice(0,7);
+    if(currentMonth === todayYm){
+      const bigUnconfirmed = data.subscriptions
+        .filter(s => (s.frequency||'monthly') === 'monthly' && Number(s.amount) >= 50 && !((s.confirmations||{})[todayYm]))
+        .sort((a,b) => b.amount - a.amount)
+        .slice(0,4);
+      if(bigUnconfirmed.length){
+        const list = bigUnconfirmed.map(s => `${s.name} (${fmt(s.amount)})`).join(', ');
+        notes.push({
+          level: 'rust',
+          text: `Sin confirmar este mes: ${list}. Ese dinero no se ha restado de tu balance todavía.`
+        });
+      }
+    }
+
+    if(notes.length === 0){
+      body.innerHTML = `<p style="color:var(--muted);font-style:italic;font-size:12.5px;margin:0;">Todo se ve saludable — sin alertas por ahora.</p>`;
+      return;
+    }
+
+    const levelColor = { rust: 'var(--rust-dk)', gold: 'var(--gold-dk)', ok: 'var(--muted)' };
+    const levelIcon = { rust: '🚩', gold: '⚠', ok: '✓' };
+    body.innerHTML = notes.map(n => `
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-start;">
+        <span style="flex-shrink:0;">${levelIcon[n.level]}</span>
+        <span style="font-size:12.5px;color:${levelColor[n.level]};line-height:1.4;">${escapeHtml(n.text)}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderChecklist(){
+    const list = document.getElementById('checklistItems');
+    const empty = document.getElementById('checklistEmpty');
+    list.innerHTML = '';
+
+    const todayReal = new Date();
+    const todayYm = todayReal.toISOString().slice(0,7);
+    const todayDayNum = todayReal.getDate();
+    const currentWeekBucket = weekBucketOf(todayDayNum);
+    const monthNamesShort = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+    let rows = []; // {item, periodKey, dueDay, kind}
+
+    if(checklistPeriod === 'monthly'){
+      data.subscriptions.filter(s => (s.frequency || 'monthly') === 'monthly' && isActiveInMonth(s, todayYm)).forEach(s => {
+        const days = getOccurrenceDays(todayYm, 'monthly', s.payDay);
+        rows.push({ item:s, periodKey: todayYm, dueDay: days[0], kind:'expense' });
+      });
+      // Anuales: solo aparecen el mes que les toca
+      data.subscriptions.filter(s => s.frequency === 'yearly' && isActiveInMonth(s, todayYm)).forEach(s => {
+        const days = getOccurrenceDays(todayYm, 'yearly', s.payDay, s.payMonth);
+        if(days.length){
+          rows.push({ item:s, periodKey: todayYm, dueDay: days[0], kind:'expense' });
+        }
+      });
+      // Ingresos recurrentes marcados como "no garantizados" (ej. renta)
+      data.recurringIncomes.filter(i => i.requiresConfirmation && (i.frequency||'monthly') === 'monthly' && isActiveInMonth(i, todayYm)).forEach(i => {
+        const days = getOccurrenceDays(todayYm, 'monthly', i.payDay);
+        rows.push({ item:i, periodKey: todayYm, dueDay: days[0], kind:'income' });
+      });
+    }
+    // Los semanales/bisemanales ya no requieren confirmación manual — se calculan
+    // automático por fecha para que nunca se queden pendientes atascados.
+
+    rows.sort((a,b) => a.dueDay - b.dueDay);
+
+    if(checklistPeriod === 'weekly'){
+      document.getElementById('checklistProgressLabel').textContent = 'AUTOMÁTICO';
+      document.getElementById('checklistProgressBar').style.width = '100%';
+      empty.style.display = 'block';
+      empty.textContent = 'Los pagos semanales y bisemanales se calculan automáticamente por fecha — no necesitan confirmación aquí.';
+      return;
+    }
+    empty.textContent = 'No hay pagos mensuales para revisar.';
+
+    const total = rows.length;
+    const doneCount = rows.filter(r => (r.item.confirmations||{})[r.periodKey]).length;
+    document.getElementById('checklistProgressLabel').textContent = `PROGRESO: ${doneCount} DE ${total} CONFIRMADOS`;
+    document.getElementById('checklistProgressBar').style.width = total ? Math.round((doneCount/total)*100) + '%' : '0%';
+
+    empty.style.display = total ? 'none' : 'block';
+
+    rows.forEach(({item, periodKey, dueDay, kind}) => {
+      const confirmedDate = (item.confirmations||{})[periodKey];
+      const diffDays = dueDay - todayDayNum;
+      let dueLabel, urgent = false;
+      if(confirmedDate){
+        const cd = new Date(confirmedDate);
+        dueLabel = `confirmado el ${cd.getDate()} ${monthNamesShort[cd.getMonth()]}`;
+      } else if(diffDays < 0){
+        dueLabel = `vencía hace ${Math.abs(diffDays)} día${Math.abs(diffDays)===1?'':'s'}`;
+        urgent = true;
+      } else if(diffDays === 0){
+        dueLabel = 'vence hoy';
+        urgent = true;
+      } else {
+        dueLabel = `vence en ${diffDays} día${diffDays===1?'':'s'}`;
+      }
+
+      const subLabel = kind === 'income' ? `${escapeHtml(item.person)} · ingreso` : escapeHtml(item.category);
+      const li = document.createElement('li');
+      const boxClass = confirmedDate ? 'done' : (urgent ? 'urgent' : '');
+      li.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <div class="checklist-checkbox ${boxClass}" data-checklist-toggle data-sub-id="${item.id}" data-period-key="${periodKey}" data-kind="${kind}">✓</div>
+          <div class="entry-name" style="flex:1;min-width:0;">
+            ${escapeHtml(item.name)}
+            <span class="meta">${subLabel} · ${fmt(item.amount)}</span>
+          </div>
+        </div>
+        <div style="font-family:var(--body);font-size:10px;color:${urgent && !confirmedDate ? 'var(--rust-dk)' : 'var(--muted)'};white-space:nowrap;">${dueLabel}</div>
+      `;
+      list.appendChild(li);
+    });
+
+    document.querySelectorAll('[data-checklist-toggle]').forEach(box => {
+      box.addEventListener('click', () => {
+        const list = box.dataset.kind === 'income' ? data.recurringIncomes : data.subscriptions;
+        const sub = list.find(s => s.id === box.dataset.subId);
+        if(!sub) return;
+        if(!sub.confirmations) sub.confirmations = {};
+        const key = box.dataset.periodKey;
+        if(sub.confirmations[key]){
+          delete sub.confirmations[key];
+        } else {
+          sub.confirmations[key] = new Date().toISOString();
+        }
+        renderChecklist();
+        scheduleSave();
+      });
+    });
+  }
+
+  function goToView(viewId){
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById(viewId).style.display = 'block';
+    window.scrollTo(0,0);
+  }
+  function backToDashboard(){
+    ['ingresosView','gastosView','recurrentesView'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('dashboardView').style.display = 'block';
+    window.scrollTo(0,0);
+  }
+  document.getElementById('tabBtnIngresos').addEventListener('click', () => goToView('ingresosView'));
+  document.getElementById('tabBtnRecurrentes').addEventListener('click', () => goToView('recurrentesView'));
+  document.getElementById('tabBtnGastos').addEventListener('click', () => goToView('gastosView'));
+  document.getElementById('btnBackFromIngresos').addEventListener('click', backToDashboard);
+  document.getElementById('btnBackFromGastos').addEventListener('click', backToDashboard);
+  document.getElementById('btnBackFromRecurrentes').addEventListener('click', backToDashboard);
+
+  document.getElementById('btnGoToChecklist').addEventListener('click', () => {
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('checklistView').style.display = 'block';
+    renderChecklist();
+    window.scrollTo(0,0);
+  });
+  document.getElementById('checklistPendingInline').addEventListener('click', () => {
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('checklistView').style.display = 'block';
+    renderChecklist();
+    window.scrollTo(0,0);
+  });
+  document.getElementById('btnBackFromChecklist').addEventListener('click', () => {
+    document.getElementById('checklistView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+    window.scrollTo(0,0);
+  });
+
+  document.getElementById('btnGoToHistorial').addEventListener('click', () => {
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('historialView').style.display = 'block';
+    renderHistorial();
+    window.scrollTo(0,0);
+  });
+  document.getElementById('btnBackFromHistorial').addEventListener('click', () => {
+    document.getElementById('historialView').style.display = 'none';
+    document.getElementById('dashboardView').style.display = 'block';
+    window.scrollTo(0,0);
+  });
+  function setChecklistPeriod(period){
+    checklistPeriod = period;
+    const wBtn = document.getElementById('btnChecklistWeekly');
+    const mBtn = document.getElementById('btnChecklistMonthly');
+    if(period === 'weekly'){
+      wBtn.style.background = 'var(--ledger-dk)'; wBtn.style.color = 'var(--gold)';
+      mBtn.style.background = 'transparent'; mBtn.style.color = 'var(--muted)';
+    } else {
+      mBtn.style.background = 'var(--ledger-dk)'; mBtn.style.color = 'var(--gold)';
+      wBtn.style.background = 'transparent'; wBtn.style.color = 'var(--muted)';
+    }
+    renderChecklist();
+  }
+  document.getElementById('btnChecklistWeekly').addEventListener('click', () => setChecklistPeriod('weekly'));
+  document.getElementById('btnChecklistMonthly').addEventListener('click', () => setChecklistPeriod('monthly'));
+
+  document.getElementById('formSavingGoal').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = parseFloat(document.getElementById('savingGoalInput').value);
+    data.savingGoal = isNaN(val) || val <= 0 ? 0 : val;
+    render();
+    scheduleSave();
+  });
+
+  // ---- Barra inferior: navegación entre páginas desde cualquier lugar ----
+  const NAV_VIEWS = ['dashboardView','ingresosView','gastosView','recurrentesView','checklistView','historialView'];
+  function navTo(id){
+    NAV_VIEWS.forEach(v => { document.getElementById(v).style.display = (v === id) ? 'block' : 'none'; });
+    if(id === 'checklistView') renderChecklist();
+    if(id === 'historialView') renderHistorial();
+    window.scrollTo(0,0);
+  }
+  function syncNavActive(){
+    const visible = NAV_VIEWS.find(v => document.getElementById(v).style.display === 'block') || 'dashboardView';
+    const key = (visible === 'gastosView') ? 'quick' : visible;
+    document.querySelectorAll('#bottomNav button').forEach(b => {
+      const on = (b.dataset.nav === key) || (key === 'quick' && b.id === 'navQuickAdd');
+      b.classList.toggle('active', on);
+      if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+    });
+  }
+  document.querySelectorAll('#bottomNav [data-nav]').forEach(b => b.addEventListener('click', () => navTo(b.dataset.nav)));
+  document.getElementById('navQuickAdd').addEventListener('click', () => {
+    navTo('gastosView');
+    const f = document.querySelector('#formGasto input[name="name"]');
+    if(f) setTimeout(() => f.focus(), 60);
+  });
+  NAV_VIEWS.forEach(v => new MutationObserver(syncNavActive).observe(document.getElementById(v), {attributes:true, attributeFilter:['style']}));
+  // insignia con los pagos pendientes de confirmar
+  function syncNavBadge(){
+    const wrap = document.getElementById('checklistPendingInline');
+    const n = Number(document.getElementById('checklistPendingCountInline').textContent) || 0;
+    const badge = document.getElementById('navBadge');
+    badge.textContent = n;
+    badge.hidden = !(n > 0 && wrap.style.display !== 'none');
+  }
+  new MutationObserver(syncNavBadge).observe(document.getElementById('checklistPendingInline'), {attributes:true, childList:true, characterData:true, subtree:true});
+  syncNavActive(); syncNavBadge();
+
+  // ---- Tema: automático / claro / oscuro ----
+  let theme = 'auto'; try{ theme = localStorage.getItem('tema-app') || 'auto'; }catch(e){}
+  function applyTheme(t){
+    const r = document.documentElement;
+    if(t === 'light' || t === 'dark') r.setAttribute('data-theme', t); else r.removeAttribute('data-theme');
+    const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.getElementById('metaTheme').setAttribute('content', dark ? '#0E1220' : '#F3F4FA');
+    const b = document.getElementById('btnTheme');
+    b.textContent = t === 'light' ? '☀' : t === 'dark' ? '☾' : '◐';
+    b.title = t === 'auto' ? 'Tema: automático' : t === 'light' ? 'Tema: claro' : 'Tema: oscuro';
+  }
+  applyTheme(theme);
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    theme = theme === 'auto' ? 'light' : theme === 'light' ? 'dark' : 'auto';
+    try{ localStorage.setItem('tema-app', theme); }catch(e){}
+    applyTheme(theme);
+  });
+
+  // ---- App instalable (PWA) ----
+  let installEvt = null;
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; document.getElementById('btnInstall').style.display = ''; });
+  document.getElementById('btnInstall').addEventListener('click', async () => {
+    if(!installEvt) return;
+    installEvt.prompt(); await installEvt.userChoice; installEvt = null;
+    document.getElementById('btnInstall').style.display = 'none';
+  });
+  window.addEventListener('appinstalled', () => { document.getElementById('btnInstall').style.display = 'none'; });
+  // pide al navegador que no borre los datos de la app cuando falte espacio
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
+  if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      const toast = document.getElementById('updateToast');
+      const showUpdate = () => { toast.hidden = false; };
+      if(reg.waiting && hadController) showUpdate();
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        if(w) w.addEventListener('statechange', () => { if(w.state === 'installed' && navigator.serviceWorker.controller) showUpdate(); });
+      });
+      document.getElementById('btnUpdate').addEventListener('click', () => {
+        const w = reg.waiting; if(w) w.postMessage('SKIP_WAITING'); else location.reload();
+      });
+      document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') reg.update().catch(()=>{}); });
+    }).catch(() => {});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if(!hadController || reloaded) return; reloaded = true; location.reload(); });
+  }
+
+  // ---- Atajos de la pantalla de inicio (mantén pulsado el icono) ----
+  { const accion = new URLSearchParams(location.search).get('accion');
+    if(accion === 'gasto') document.getElementById('navQuickAdd').click();
+    else if(accion === 'pagos') navTo('checklistView'); }
+
+  loadData();
+</script>
+
+
+
+
+<script id="expense-weekday-helper">
+window.getExpenseWeekday = function(dateValue){
+  if(!dateValue) return '';
+  const d = new Date(dateValue + (String(dateValue).length <= 10 ? 'T12:00:00' : ''));
+  return isNaN(d) ? '' : ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][d.getDay()];
+};
+</script>
+</body>
+</html>
