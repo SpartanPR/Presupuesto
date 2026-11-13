@@ -1,6 +1,6 @@
 // Service worker de Presupuesto Familiar.
 // Para publicar una versión nueva de la app, cambia VERSION (o solo sube el index.html: se recarga solo desde la red).
-const VERSION = 'v2-2026-10-10';
+const VERSION = 'v3-2026-11-13';
 const CACHE = 'presupuesto-' + VERSION;
 const SHELL = ['./', './index.html', './esposa.html', './manifest.webmanifest', './manifest-esposa.webmanifest',
                './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
