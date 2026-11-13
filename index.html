@@ -715,6 +715,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
   </div>
   <div class="toolbar">
     <button id="btnImport">⬆ Importar respaldo</button>
+    <button id="btnConciliar">🧾 Conciliar statements</button>
     <button id="btnInstall" style="display:none;">📲 Instalar app</button>
     <input type="file" id="importFileInput" accept="application/json" style="display:none;">
   </div>
@@ -898,6 +899,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
       <input type="text" name="name" placeholder="Ej. Compra, salida..." required>
       <input type="text" name="category" list="categoryList" placeholder="Categoría (ej. Gasolina)" required>
       <input type="number" name="amount" placeholder="$" step="0.01" min="0" required>
+      <select name="paidBy" aria-label="Pagado por"><option value="Yo">Pagó: Yo</option><option value="Esposa">Pagó: Esposa</option><option value="Compartido">Pagó: Compartido</option></select>
       <select name="vehicle" aria-label="Vehículo"><option value="">Vehículo (opcional)</option><option value="Mazda">Mazda</option><option value="Kia">Kia</option><option value="Otro">Otro vehículo</option></select>
       <input type="number" name="gallons" placeholder="Galones (opcional)" step="0.01" min="0">
       <input type="number" name="priceGal" placeholder="$ / galón (opcional)" step="0.001" min="0">
@@ -1076,7 +1078,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
     const label = document.getElementById('lastSyncLabel');
     if(label) label.textContent = new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
   }
-  let data = { incomes: [], expenses: [], subscriptions: [], recurringIncomes: [], budget: null, categoryBudgets: {}, savingGoal: 0 };
+  let data = { incomes: [], expenses: [], subscriptions: [], recurringIncomes: [], budget: null, categoryBudgets: {}, savingGoal: 0, transfers: [] };
   let saveTimeout = null;
   let currentMonth = new Date().toISOString().slice(0,7); // "YYYY-MM"
   let dashboardPeriod = 'weekly'; // 'weekly' | 'monthly'
@@ -1131,6 +1133,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
         data.budget = parsed.budget != null ? parsed.budget : null;
         data.categoryBudgets = parsed.categoryBudgets || {};
         data.savingGoal = parsed.savingGoal != null ? parsed.savingGoal : 0;
+        data.transfers = parsed.transfers || [];
         saveLocalOnly();
         render();
       }
@@ -1284,6 +1287,8 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
         data.recurringIncomes = parsed.recurringIncomes || [];
           data.budget = parsed.budget != null ? parsed.budget : null;
         data.categoryBudgets = parsed.categoryBudgets || {};
+          data.savingGoal = parsed.savingGoal != null ? parsed.savingGoal : 0;
+          data.transfers = parsed.transfers || [];
         }
       } else {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -1295,6 +1300,8 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
         data.recurringIncomes = parsed.recurringIncomes || [];
           data.budget = parsed.budget != null ? parsed.budget : null;
         data.categoryBudgets = parsed.categoryBudgets || {};
+          data.savingGoal = parsed.savingGoal != null ? parsed.savingGoal : 0;
+          data.transfers = parsed.transfers || [];
         }
       }
     }catch(e){
@@ -1665,7 +1672,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
       totalOut += Number(item.amount);
       const li = document.createElement('li');
       li.innerHTML = `
-        <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.category)}${item.vehicle ? ` · ${escapeHtml(item.vehicle)}` : ''}${dateLabel(item.date)}</span></div>
+        <div class="entry-name">${escapeHtml(item.name)}<span class="meta">${escapeHtml(item.category)}${item.vehicle ? ` · ${escapeHtml(item.vehicle)}` : ''}${item.paidBy ? ` · ${escapeHtml(item.paidBy)}` : ''}${item.importRef ? ' · 🧾' : ''}${dateLabel(item.date)}</span></div>
         <div class="entry-right">
           <div class="entry-amount out">${fmt(item.amount)}</div>
           <button class="del-btn" data-edit-type="expense" data-id="${item.id}" title="Editar">✎</button>
@@ -2280,7 +2287,8 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
     const vehicle = f.vehicle ? f.vehicle.value : '';
     const gallons = f.gallons && f.gallons.value ? parseFloat(f.gallons.value) : null;
     const priceGal = f.priceGal && f.priceGal.value ? parseFloat(f.priceGal.value) : null;
-    data.expenses.push({ id: 'e' + Date.now() + Math.random().toString(36).slice(2,6), name, category, amount, frequency, vehicle, gallons, priceGal, month, date });
+    const paidBy = f.paidBy ? f.paidBy.value : 'Yo';
+    data.expenses.push({ id: 'e' + Date.now() + Math.random().toString(36).slice(2,6), name, category, amount, frequency, vehicle, gallons, priceGal, paidBy, month, date });
     f.reset();
     render();
     scheduleSave();
@@ -2358,6 +2366,23 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
           <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
         </div>`;
       });
+    }
+
+    // ---- Gastos por quién pagó (solo gastos sueltos) ----
+    const byPayer = {};
+    expensesThisMonth.forEach(e => { const k = e.paidBy || 'Sin indicar'; byPayer[k] = (byPayer[k]||0) + Number(e.amount); });
+    const payerTotal = Object.values(byPayer).reduce((a,b)=>a+b,0);
+    if(payerTotal > 0){
+      html += '<div class="report-row" style="padding-top:16px;"><strong style="font-size:17px;">Gastos por quién pagó</strong></div>';
+      Object.entries(byPayer).sort((a,b)=>b[1]-a[1]).forEach(([who,amt]) => {
+        const pct = Math.round((amt/payerTotal)*100);
+        html += `<div class="report-row"><div class="report-row-top"><span>${escapeHtml(who)}</span><span>${fmt(amt)} · ${pct}%</span></div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
+      });
+    }
+    const transfersMonth = (data.transfers||[]).filter(t => t.month === currentMonth);
+    if(transfersMonth.length){
+      const tTot = transfersMonth.reduce((s,t)=>s+Number(t.amount),0);
+      html += `<div class="report-row" style="font-size:12.5px;color:var(--muted);">⇄ ${transfersMonth.length} transferencia(s) entre cuentas por ${fmt(tTot)} — no cuentan como gasto.</div>`;
     }
 
     // ---- Gastos por semana (solo gastos únicos con fecha) ----
@@ -2581,6 +2606,9 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
     const vehicleField = (type === 'expense')
       ? `<select name="vehicle" style="${inputStyle}"><option value="">Vehículo (opcional)</option><option value="Mazda" ${item.vehicle==='Mazda'?'selected':''}>Mazda</option><option value="Kia" ${item.vehicle==='Kia'?'selected':''}>Kia</option><option value="Otro" ${item.vehicle==='Otro'?'selected':''}>Otro vehículo</option></select>`
       : '';
+    const paidByField = (type === 'expense')
+      ? `<select name="paidBy" style="${inputStyle}">${['Yo','Esposa','Compartido'].map(o => `<option value="${o}" ${(item.paidBy||'Yo')===o?'selected':''}>Pagó: ${o}</option>`).join('')}</select>`
+      : '';
     const requiresConfirmationField = (type === 'recurringIncome')
       ? `<label class="checkbox-row"><input type="checkbox" name="requiresConfirmation" ${item.requiresConfirmation?'checked':''}> No es 100% garantizado (ej. renta) — pedir confirmación cada mes</label>`
       : '';
@@ -2607,6 +2635,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
       <input type="number" name="amount" value="${item.amount}" step="0.01" min="0" style="${inputStyle}" required>
       ${isRecurring ? recurringFields : dateField}
       ${vehicleField}
+      ${paidByField}
       ${requiresConfirmationField}
       ${activeWindowField}
       <button type="submit" style="font-family:var(--body);font-size:12.5px;font-weight:600;padding:10px;border:none;border-radius:2px;background:var(--ledger);color:var(--ink);cursor:pointer;">Guardar cambios</button>
@@ -2639,6 +2668,7 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
         item.date = f.date.value || item.date;
         if(item.date) item.month = item.date.slice(0,7);
         if(type === 'expense' && f.vehicle) item.vehicle = f.vehicle.value || '';
+        if(type === 'expense' && f.paidBy) item.paidBy = f.paidBy.value || 'Yo';
       }
       document.getElementById('editModal').classList.remove('open');
       render();
@@ -2795,6 +2825,8 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
       data.recurringIncomes = parsed.recurringIncomes || [];
       data.budget = parsed.budget != null ? parsed.budget : null;
         data.categoryBudgets = parsed.categoryBudgets || {};
+      data.savingGoal = parsed.savingGoal != null ? parsed.savingGoal : 0;
+      data.transfers = parsed.transfers || [];
 
       render();
       await saveLocalOnly();
@@ -3266,6 +3298,239 @@ button[type=submit][style*="background:var(--ledger)"],button[style*="background
 
 
 
+
+<script id="conciliacion-v1">
+// ---- Conciliación de statements ----
+// Lee un archivo JSON de conciliación (preparado desde los statements del banco),
+// compara cada movimiento con lo que ya está en el app y te deja aprobar qué entra.
+// Formato: { "type":"conciliacion", "items":[ { "ref","kind":"expense|income|transfer",
+//   "date":"YYYY-MM-DD", "name", "amount", "category", "paidBy":"Yo|Esposa",
+//   "account", "from", "to", "note" } ] }
+(function(){
+  const css = document.createElement('style');
+  css.textContent = `
+  .conc-sec{padding:12px 16px 4px;font:700 14px var(--body);display:flex;justify-content:space-between;align-items:center}
+  .conc-row{display:flex;gap:10px;align-items:flex-start;padding:10px 16px;border-bottom:1px solid var(--line)}
+  .conc-row input[type=checkbox]{width:22px;height:22px;margin-top:2px;flex:none;accent-color:var(--gold)}
+  .conc-main{flex:1;min-width:0}
+  .conc-name{font-weight:600;font-size:14.5px;overflow-wrap:anywhere}
+  .conc-meta{font-size:12.5px;color:var(--muted)}
+  .conc-amt{font-weight:700;white-space:nowrap}
+  .conc-cat{margin-top:6px;width:100%;min-height:40px!important;font-size:14px!important}
+  .conc-foot{position:sticky;bottom:0;background:var(--surface);padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px}
+  .conc-foot button{flex:1;border:none;border-radius:12px;font:700 14.5px var(--body);cursor:pointer}
+  .conc-sum{padding:10px 16px;font-size:13px;color:var(--muted)}`;
+  document.head.appendChild(css);
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'concModal';
+  modal.innerHTML = `<div class="modal-box" style="padding-bottom:0;">
+    <div class="modal-head"><h2>Conciliación</h2><button class="modal-close" id="concClose">✕</button></div>
+    <div id="concBody"></div>
+    <div class="conc-foot">
+      <button type="button" id="concCancel" style="background:var(--surface-2);color:var(--ink);">Cancelar</button>
+      <button type="button" id="concApply" style="background:var(--gold);color:var(--on-accent);">Aplicar</button>
+    </div></div>`;
+  document.body.appendChild(modal);
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file'; fileInput.accept = 'application/json,.json'; fileInput.style.display = 'none';
+  document.body.appendChild(fileInput);
+
+  // Tarjeta de transferencias en la vista de Gastos
+  const tCard = document.createElement('div');
+  tCard.className = 'card';
+  tCard.innerHTML = `<div class="card-head"><h2>Transferencias <span class="tag fixed">no es gasto</span></h2><div class="subtotal" id="totalTransfers">$0.00</div></div>
+    <p class="card-sub">Dinero que se movió entre tus cuentas y las de tu esposa. No suma a gastos ni ingresos.</p>
+    <ul class="entries" id="listTransfers"></ul>
+    <div class="empty" id="emptyTransfers">Sin transferencias este mes.</div>`;
+  document.getElementById('gastosView').appendChild(tCard);
+
+  function renderTransfers(){
+    const list = document.getElementById('listTransfers');
+    const rows = (data.transfers||[]).filter(t => t.month === currentMonth).sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    list.innerHTML = '';
+    let tot = 0;
+    rows.forEach(t => {
+      tot += Number(t.amount);
+      const li = document.createElement('li');
+      li.innerHTML = `<div class="entry-name">${escapeHtml(t.name || 'Transferencia')}<span class="meta">${escapeHtml(t.from||'?')} → ${escapeHtml(t.to||'?')}${dateLabel(t.date)}</span></div>
+        <div class="entry-right"><div class="entry-amount">${fmt(t.amount)}</div><button class="del-btn" data-del-transfer="${t.id}" title="Eliminar">✕</button></div>`;
+      list.appendChild(li);
+    });
+    document.getElementById('totalTransfers').textContent = fmt(tot);
+    document.getElementById('emptyTransfers').style.display = rows.length ? 'none' : 'block';
+    list.querySelectorAll('[data-del-transfer]').forEach(b => b.addEventListener('click', () => {
+      if(!confirm('¿Eliminar esta transferencia?')) return;
+      data.transfers = data.transfers.filter(t => t.id !== b.dataset.delTransfer);
+      render(); scheduleSave();
+    }));
+  }
+  const _render = render;
+  render = function(){ _render(); renderTransfers(); };
+
+  // ---- Comparación ----
+  const dayDiff = (a, b) => (a && b) ? Math.abs((new Date(a+'T12:00:00') - new Date(b+'T12:00:00')) / 86400000) : 99;
+
+  function classify(items){
+    const used = new Set();
+    const out = [];
+    items.forEach((raw, idx) => {
+      const it = {
+        idx,
+        ref: raw.ref || [raw.account||'', raw.date, raw.amount, raw.name].join('|'),
+        kind: raw.kind || 'expense',
+        date: (raw.date||'').slice(0,10),
+        name: raw.name || 'Sin descripción',
+        amount: Math.abs(Number(raw.amount) || 0),
+        category: raw.category ? titleCase(raw.category) : 'Otro',
+        paidBy: raw.paidBy || 'Yo',
+        account: raw.account || '', from: raw.from || '', to: raw.to || '', note: raw.note || ''
+      };
+      if(!it.date || !it.amount){ return; }
+      const ym = it.date.slice(0,7);
+      const tol = Math.max(1, it.amount * 0.02);
+
+      if(it.kind === 'transfer'){
+        const exists = (data.transfers||[]).some(t => t.importRef === it.ref ||
+          (Math.abs(Number(t.amount) - it.amount) < 0.01 && dayDiff(t.date, it.date) <= 3));
+        out.push({ ...it, status: exists ? 'existe' : 'transferencia' });
+        return;
+      }
+
+      const pool = it.kind === 'income' ? data.incomes : data.expenses;
+      const byRef = pool.find(x => x.importRef && x.importRef === it.ref);
+      if(byRef){ used.add(byRef.id); out.push({ ...it, status:'existe', match: byRef }); return; }
+
+      const cands = pool
+        .filter(x => !used.has(x.id) && Math.abs(Number(x.amount) - it.amount) <= tol && dayDiff(x.date, it.date) <= 5)
+        .map(x => ({ x, score: Math.abs(Number(x.amount) - it.amount) + dayDiff(x.date, it.date) * 0.5 }))
+        .sort((a,b) => a.score - b.score);
+      if(cands.length){
+        const m = cands[0].x;
+        used.add(m.id);
+        const exact = Math.abs(Number(m.amount) - it.amount) < 0.01 && dayDiff(m.date, it.date) <= 2;
+        out.push({ ...it, status: exact ? 'existe' : 'parecido', match: m });
+        return;
+      }
+
+      // ¿Es un recurrente (suscripción / pago fijo / sueldo)?
+      const recPool = it.kind === 'income' ? data.recurringIncomes : data.subscriptions;
+      const rec = recPool.find(s => isActiveInMonth(s, ym) && Math.abs(Number(s.amount) - it.amount) <= tol);
+      if(rec){
+        const freq = rec.frequency || 'monthly';
+        const needsConfirm = it.kind === 'income' ? !!rec.requiresConfirmation : (freq === 'monthly' || freq === 'yearly');
+        const already = !needsConfirm || (rec.confirmations || {})[ym];
+        out.push({ ...it, status: already ? 'existe' : 'recurrente', rec, ym });
+        return;
+      }
+      out.push({ ...it, status:'falta' });
+    });
+    return out;
+  }
+
+  let pending = [];
+  const SECTIONS = [
+    { key:'falta',         title:'❌ Faltan en el app',         def:true,  hint:'Se añaden como nuevos' },
+    { key:'parecido',      title:'⚠️ Parecidos',                 def:false, hint:'Marca solo si es un gasto distinto' },
+    { key:'recurrente',    title:'↻ Pagos fijos sin confirmar', def:true,  hint:'Se confirman en el Checklist' },
+    { key:'transferencia', title:'⇄ Transferencias',            def:true,  hint:'No cuentan como gasto' },
+    { key:'existe',        title:'✅ Ya están',                  def:false, hint:'' }
+  ];
+
+  function openModal(){
+    const body = document.getElementById('concBody');
+    const counts = {};
+    pending.forEach(p => counts[p.status] = (counts[p.status]||0) + 1);
+    let html = `<div class="conc-sum">${pending.length} movimientos leídos · ${counts.falta||0} faltan · ${counts.parecido||0} parecidos · ${counts.recurrente||0} por confirmar · ${counts.transferencia||0} transferencias · ${counts.existe||0} ya están</div>`;
+    SECTIONS.forEach(sec => {
+      const rows = pending.filter(p => p.status === sec.key);
+      if(!rows.length) return;
+      const collapsed = sec.key === 'existe';
+      html += `<div class="conc-sec"><span>${sec.title} (${rows.length})</span><span style="font:500 12px var(--body);color:var(--muted)">${sec.hint}</span></div>`;
+      if(collapsed){
+        html += `<details style="padding:0 16px 8px;"><summary style="font-size:13px;color:var(--muted);cursor:pointer;padding:6px 0;">Ver lista</summary>`;
+      }
+      rows.forEach(p => {
+        const sign = p.kind === 'income' ? 'in' : 'out';
+        let meta = `${dateLabel(p.date).replace(' · ','')}${p.account ? ' · ' + escapeHtml(p.account) : ''} · ${escapeHtml(p.paidBy)}`;
+        if(p.kind === 'transfer') meta = `${escapeHtml(p.from||'?')} → ${escapeHtml(p.to||'?')} · ${dateLabel(p.date).replace(' · ','')}`;
+        if(p.match) meta += `<br>En el app: ${escapeHtml(p.match.name)} · ${fmt(p.match.amount)}${dateLabel(p.match.date)}`;
+        if(p.rec) meta += `<br>Recurrente: ${escapeHtml(p.rec.name)} · ${fmt(p.rec.amount)}`;
+        if(p.note) meta += `<br>${escapeHtml(p.note)}`;
+        const catSel = (p.status === 'falta' || p.status === 'parecido') && p.kind === 'expense'
+          ? `<input class="conc-cat" list="categoryList" data-conc-cat="${p.idx}" value="${escapeHtml(p.category)}">` : '';
+        html += `<label class="conc-row">
+          ${collapsed ? '' : `<input type="checkbox" data-conc="${p.idx}" ${sec.def ? 'checked' : ''}>`}
+          <div class="conc-main"><div class="conc-name">${escapeHtml(p.name)}</div><div class="conc-meta">${meta}</div>${catSel}</div>
+          <div class="conc-amt entry-amount ${p.kind==='transfer'?'':sign}">${fmt(p.amount)}</div>
+        </label>`;
+      });
+      if(collapsed) html += `</details>`;
+    });
+    body.innerHTML = html;
+    modal.classList.add('open');
+  }
+
+  function closeModal(){ modal.classList.remove('open'); pending = []; }
+
+  function apply(){
+    const checked = new Set([...modal.querySelectorAll('[data-conc]:checked')].map(c => Number(c.dataset.conc)));
+    const newId = (p) => p + Date.now() + Math.random().toString(36).slice(2,6);
+    let added = 0, confirmed = 0, transfers = 0;
+    pending.forEach(p => {
+      if(!checked.has(p.idx)) return;
+      if(p.status === 'falta' || p.status === 'parecido'){
+        const catInput = modal.querySelector(`[data-conc-cat="${p.idx}"]`);
+        const category = catInput && catInput.value.trim() ? titleCase(catInput.value) : p.category;
+        const month = p.date.slice(0,7);
+        if(p.kind === 'income'){
+          data.incomes.push({ id:newId('i'), name:p.name, person:p.paidBy, amount:p.amount, month, date:p.date, importRef:p.ref, account:p.account });
+        } else {
+          data.expenses.push({ id:newId('e'), name:p.name, category, amount:p.amount, frequency:'once', vehicle:'', gallons:null, priceGal:null, paidBy:p.paidBy, month, date:p.date, importRef:p.ref, account:p.account });
+        }
+        added++;
+      } else if(p.status === 'recurrente'){
+        if(!p.rec.confirmations) p.rec.confirmations = {};
+        p.rec.confirmations[p.ym] = new Date(p.date + 'T12:00:00').toISOString();
+        confirmed++;
+      } else if(p.status === 'transferencia'){
+        if(!data.transfers) data.transfers = [];
+        data.transfers.push({ id:newId('t'), name:p.name, amount:p.amount, from:p.from || p.account, to:p.to, month:p.date.slice(0,7), date:p.date, importRef:p.ref });
+        transfers++;
+      }
+    });
+    closeModal();
+    render();
+    scheduleSave();
+    setTimeout(() => alert(`Listo: ${added} añadido(s), ${confirmed} pago(s) fijo(s) confirmado(s), ${transfers} transferencia(s).`), 50);
+  }
+
+  document.getElementById('btnConciliar').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try{ parsed = JSON.parse(reader.result); }catch(err){ alert('Ese archivo no es JSON válido.'); fileInput.value=''; return; }
+      const items = Array.isArray(parsed) ? parsed : parsed.items;
+      if(!Array.isArray(items) || !items.length){ alert('Ese archivo no tiene movimientos para conciliar.'); fileInput.value=''; return; }
+      pending = classify(items);
+      fileInput.value = '';
+      openModal();
+    };
+    reader.readAsText(file);
+  });
+  document.getElementById('concApply').addEventListener('click', apply);
+  document.getElementById('concCancel').addEventListener('click', closeModal);
+  document.getElementById('concClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+
+  renderTransfers();
+})();
+</script>
 
 <script id="expense-weekday-helper">
 window.getExpenseWeekday = function(dateValue){
